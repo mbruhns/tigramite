@@ -4,3 +4,15 @@
 
 # Python byte code
 *.pyc
+
+# Ipython notebooks
+.ipynb_checkpoints
+
+# Generated PDF files
+*.pdf
+
+# Distribution / packaging
+venv/
+build/
+dist/
+*.egg-info/
