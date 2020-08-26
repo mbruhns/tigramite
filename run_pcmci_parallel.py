@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-Tigramite causal discovery for time series: Parallization script implementing 
-the PCMCI method based on mpi4py. 
+Tigramite causal discovery for time series: Parallization script implementing
+the PCMCI method based on mpi4py.
 
 Parallelization is done across variables j for both the PC condition-selection
 step and the MCI step.

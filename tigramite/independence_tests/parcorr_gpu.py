@@ -10,6 +10,7 @@ import numpy as np
 import sys
 from independence_tests_base import CondIndTest
 import time
+import ray
 
 
 def timeit(method):
@@ -25,7 +26,6 @@ def timeit(method):
         return result
 
     return timed
-
 
 
 class ParCorr(CondIndTest):
@@ -71,7 +71,6 @@ class ParCorr(CondIndTest):
 
         CondIndTest.__init__(self, **kwargs)
 
-    @timeit
     def _get_single_residuals(
         self, array, target_var, standardize=True, return_means=False
     ):
@@ -130,8 +129,8 @@ class ParCorr(CondIndTest):
             return (resid, mean)
         return resid
 
-    @timeit
     # TODO: Can xyz be removed?
+    @timeit
     def get_dependence_measure(self, array, xyz):
         """Return partial correlation.
 
@@ -157,7 +156,6 @@ class ParCorr(CondIndTest):
         val, _ = stats.pearsonr(x_vals, y_vals)
         return val
 
-    @timeit
     def get_shuffle_significance(
         self, array, xyz, value, return_null_dist=False
     ):
@@ -206,7 +204,6 @@ class ParCorr(CondIndTest):
             return pval, null_dist
         return pval
 
-    @timeit
     def get_analytic_significance(self, value, T, dim):
         """Returns analytic p-value from Student's t-test for the Pearson
         correlation coefficient.
@@ -244,7 +241,6 @@ class ParCorr(CondIndTest):
 
         return pval
 
-    @timeit
     def get_analytic_confidence(self, value, df, conf_lev):
         """Returns analytic confidence interval for correlation coefficient.
 
@@ -280,7 +276,6 @@ class ParCorr(CondIndTest):
         )
         return (conf_lower, conf_upper)
 
-    @timeit
     def get_model_selection_criterion(self, j, parents, tau_max=0):
         """Returns Akaike's Information criterion modulo constants.
 
@@ -334,16 +329,9 @@ class ParCorr(CondIndTest):
 
 if __name__ == "__main__":
 
-    import matplotlib.pyplot as plt
 
-    plt.style.use("ggplot")
-
-    # Setup test case
-
-    size = 50000
-    data = np.random.normal(loc=0, scale=1, size=(3, size))
+    size = 10 ** 7
+    data = np.random.normal(size=(3, size))
 
     parcorr = ParCorr()
-
-    parcorr._get_single_residuals(array=data, target_var=1)
-    parcorr.get_dependence_measure(array=data)
+    parcorr.get_dependence_measure(array=data, xyz=None)
