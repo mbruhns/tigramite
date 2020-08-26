@@ -27,9 +27,6 @@ def timeit(method):
     return timed
 
 
-def foo():
-    pass
-
 
 class ParCorr(CondIndTest):
     r"""Partial correlation test.
