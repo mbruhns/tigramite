@@ -94,6 +94,7 @@ class CMIknn(CondIndTest):
     **kwargs :
         Arguments passed on to parent class CondIndTest.
     """
+
     @property
     def measure(self):
         """
@@ -101,18 +102,20 @@ class CMIknn(CondIndTest):
         """
         return self._measure
 
-    def __init__(self,
-                 knn=0.2,
-                 shuffle_neighbors=5,
-                 significance='shuffle_test',
-                 transform='ranks',
-                 n_jobs=-1,
-                 **kwargs):
+    def __init__(
+        self,
+        knn=0.2,
+        shuffle_neighbors=5,
+        significance="shuffle_test",
+        transform="ranks",
+        n_jobs=-1,
+        **kwargs
+    ):
         # Set the member variables
         self.knn = knn
         self.shuffle_neighbors = shuffle_neighbors
         self.transform = transform
-        self._measure = 'cmi_knn'
+        self._measure = "cmi_knn"
         self.two_sided = False
         self.residual_based = False
         self.recycle_residuals = False
@@ -155,46 +158,49 @@ class CMIknn(CondIndTest):
         """
 
         dim, T = array.shape
-        array = array.astype('float')
+        array = array.astype("float")
 
         # Add noise to destroy ties...
-        array += (1E-6 * array.std(axis=1).reshape(dim, 1)
-                  * np.random.rand(array.shape[0], array.shape[1]))
+        array += (
+            1e-6
+            * array.std(axis=1).reshape(dim, 1)
+            * np.random.rand(array.shape[0], array.shape[1])
+        )
 
-        if self.transform == 'standardize':
+        if self.transform == "standardize":
             # Standardize
-            array = array.astype('float')
+            array = array.astype("float")
             array -= array.mean(axis=1).reshape(dim, 1)
             array /= array.std(axis=1).reshape(dim, 1)
             # FIXME: If the time series is constant, return nan rather than
             # raising Exception
             if np.isnan(array).sum() != 0:
-                raise ValueError("nans after standardizing, "
-                                 "possibly constant array!")
-        elif self.transform == 'uniform':
+                raise ValueError(
+                    "nans after standardizing, possibly constant array!"
+                )
+        elif self.transform == "uniform":
             array = self._trafo2uniform(array)
-        elif self.transform == 'ranks':
-            array = array.argsort(axis=1).argsort(axis=1).astype('float')
-
+        elif self.transform == "ranks":
+            array = array.argsort(axis=1).argsort(axis=1).astype("float")
 
         # Use cKDTree to get distances eps to the k-th nearest neighbors for
         # every sample in joint space XYZ with maximum norm
         tree_xyz = spatial.cKDTree(array.T)
-        epsarray = tree_xyz.query(array.T, k=knn+1, p=np.inf,
-                                  eps=0., n_jobs=self.n_jobs)[0][:, knn].astype('float')
+        epsarray = tree_xyz.query(
+            array.T, k=knn + 1, p=np.inf, eps=0.0, n_jobs=self.n_jobs
+        )[0][:, knn].astype("float")
 
         # Prepare for fast cython access
         dim_x = int(np.where(xyz == 0)[0][-1] + 1)
         dim_y = int(np.where(xyz == 1)[0][-1] + 1 - dim_x)
 
-        k_xz, k_yz, k_z = \
-                tigramite_cython_code._get_neighbors_within_eps_cython(array,
-                                                                       T,
-                                                                       dim_x,
-                                                                       dim_y,
-                                                                       epsarray,
-                                                                       knn,
-                                                                       dim)
+        (
+            k_xz,
+            k_yz,
+            k_z,
+        ) = tigramite_cython_code._get_neighbors_within_eps_cython(
+            array, T, dim_x, dim_y, epsarray, knn, dim
+        )
         return k_xz, k_yz, k_z
 
     def get_dependence_measure(self, array, xyz):
@@ -217,23 +223,28 @@ class CMIknn(CondIndTest):
         dim, T = array.shape
 
         if self.knn < 1:
-            knn_here = max(1, int(self.knn*T))
+            knn_here = max(1, int(self.knn * T))
         else:
             knn_here = max(1, int(self.knn))
 
-        k_xz, k_yz, k_z = self._get_nearest_neighbors(array=array,
-                                                      xyz=xyz,
-                                                      knn=knn_here)
+        k_xz, k_yz, k_z = self._get_nearest_neighbors(
+            array=array, xyz=xyz, knn=knn_here
+        )
 
-        val = special.digamma(knn_here) - (special.digamma(k_xz) +
-                                           special.digamma(k_yz) -
-                                           special.digamma(k_z)).mean()
+        val = (
+            special.digamma(knn_here)
+            - (
+                special.digamma(k_xz)
+                + special.digamma(k_yz)
+                - special.digamma(k_z)
+            ).mean()
+        )
 
         return val
 
-
-    def get_shuffle_significance(self, array, xyz, value,
-                                 return_null_dist=False):
+    def get_shuffle_significance(
+        self, array, xyz, value, return_null_dist=False
+    ):
         """Returns p-value for nearest-neighbor shuffle significance test.
 
         For non-empty Z, overwrites get_shuffle_significance from the parent
@@ -274,48 +285,52 @@ class CMIknn(CondIndTest):
 
         if len(z_indices) > 0 and self.shuffle_neighbors < T:
             if self.verbosity > 2:
-                print("            nearest-neighbor shuffle significance "
-                      "test with n = %d and %d surrogates" % (
-                      self.shuffle_neighbors, self.sig_samples))
+                print(
+                    "            nearest-neighbor shuffle significance "
+                    "test with n = %d and %d surrogates"
+                    % (self.shuffle_neighbors, self.sig_samples)
+                )
 
             # Get nearest neighbors around each sample point in Z
             z_array = np.fastCopyAndTranspose(array[z_indices, :])
             tree_xyz = spatial.cKDTree(z_array)
-            neighbors = tree_xyz.query(z_array,
-                                       k=self.shuffle_neighbors,
-                                       p=np.inf,
-                                       eps=0.)[1].astype('int32')
+            neighbors = tree_xyz.query(
+                z_array, k=self.shuffle_neighbors, p=np.inf, eps=0.0
+            )[1].astype("int32")
 
             null_dist = np.zeros(self.sig_samples)
             for sam in range(self.sig_samples):
 
                 # Generate random order in which to go through indices loop in
                 # next step
-                order = np.random.permutation(T).astype('int32')
+                order = np.random.permutation(T).astype("int32")
                 # print(order[:5])
                 # Select a series of neighbor indices that contains as few as
                 # possible duplicates
-                restricted_permutation = \
-                    tigramite_cython_code._get_restricted_permutation_cython(
-                        T=T,
-                        shuffle_neighbors=self.shuffle_neighbors,
-                        neighbors=neighbors,
-                        order=order)
+                restricted_permutation = tigramite_cython_code._get_restricted_permutation_cython(
+                    T=T,
+                    shuffle_neighbors=self.shuffle_neighbors,
+                    neighbors=neighbors,
+                    order=order,
+                )
 
                 array_shuffled = np.copy(array)
                 for i in x_indices:
                     array_shuffled[i] = array[i, restricted_permutation]
 
-                null_dist[sam] = self.get_dependence_measure(array_shuffled,
-                                                             xyz)
+                null_dist[sam] = self.get_dependence_measure(
+                    array_shuffled, xyz
+                )
 
         else:
-            null_dist = \
-                    self._get_shuffle_dist(array, xyz,
-                                           self.get_dependence_measure,
-                                           sig_samples=self.sig_samples,
-                                           sig_blocklength=self.sig_blocklength,
-                                           verbosity=self.verbosity)
+            null_dist = self._get_shuffle_dist(
+                array,
+                xyz,
+                self.get_dependence_measure,
+                sig_samples=self.sig_samples,
+                sig_blocklength=self.sig_blocklength,
+                verbosity=self.verbosity,
+            )
 
         # Sort
         null_dist.sort()
@@ -324,4 +339,3 @@ class CMIknn(CondIndTest):
         if return_null_dist:
             return pval, null_dist
         return pval
-

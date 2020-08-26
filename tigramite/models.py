@@ -24,7 +24,7 @@ except:
     print("Could not import networkx, LinearMediation plots not possible...")
 
 
-class Models():
+class Models:
     """Base class for time series models.
 
     Allows to fit any model from sklearn to the parents of a target variable.
@@ -52,12 +52,14 @@ class Models():
         Level of verbosity.
     """
 
-    def __init__(self,
-                 dataframe,
-                 model,
-                 data_transform=sklearn.preprocessing.StandardScaler(),
-                 mask_type=None,
-                 verbosity=0):
+    def __init__(
+        self,
+        dataframe,
+        model,
+        data_transform=sklearn.preprocessing.StandardScaler(),
+        mask_type=None,
+        verbosity=0,
+    ):
         # Set the mask type and dataframe object
         self.mask_type = mask_type
         self.dataframe = dataframe
@@ -74,11 +76,14 @@ class Models():
         self.tau_max = None
         self.fit_results = None
 
-    def get_fit(self, all_parents,
-                selected_variables=None,
-                tau_max=None,
-                cut_off='max_lag_or_tau_max',
-                return_data=False):
+    def get_fit(
+        self,
+        all_parents,
+        selected_variables=None,
+        tau_max=None,
+        cut_off="max_lag_or_tau_max",
+        return_data=False,
+    ):
         """Fit time series model.
 
         For each variable in selected_variables, the sklearn model is fitted
@@ -129,21 +134,25 @@ class Models():
         if tau_max is not None:
             self.tau_max = tau_max
             if self.tau_max < max_parents_lag:
-                raise ValueError("tau_max = %d, but must be at least "
-                                 " max_parents_lag = %d"
-                                 "" % (self.tau_max, max_parents_lag))
+                raise ValueError(
+                    "tau_max = %d, but must be at least  max_parents_lag = %d"
+                    % (self.tau_max, max_parents_lag)
+                )
         # Initialize the fit results
         fit_results = {}
         for j in self.selected_variables:
             Y = [(j, 0)]
             X = [(j, 0)]  # dummy
             Z = self.all_parents[j]
-            array, xyz = \
-                self.dataframe.construct_array(X, Y, Z,
-                                               tau_max=self.tau_max,
-                                               mask_type=self.mask_type,
-                                               cut_off=cut_off,
-                                               verbosity=self.verbosity)
+            array, xyz = self.dataframe.construct_array(
+                X,
+                Y,
+                Z,
+                tau_max=self.tau_max,
+                mask_type=self.mask_type,
+                cut_off=cut_off,
+                verbosity=self.verbosity,
+            )
             # Get the dimensions out of the constructed array
             dim, T = array.shape
             dim_z = dim - 2
@@ -157,12 +166,14 @@ class Models():
                 a_model.fit(X=array[2:].T, y=array[1])
                 # Cache the results
                 fit_results[j] = {}
-                fit_results[j]['model'] = a_model
+                fit_results[j]["model"] = a_model
                 # Cache the data transform
-                fit_results[j]['data_transform'] = deepcopy(self.data_transform)
+                fit_results[j]["data_transform"] = deepcopy(
+                    self.data_transform
+                )
                 # Cache the data if needed
                 if return_data:
-                    fit_results[j]['data'] = array
+                    fit_results[j]["data"] = array
             # If there are no parents, skip this variable
             else:
                 fit_results[j] = None
@@ -186,7 +197,7 @@ class Models():
         for j in self.selected_variables:
             coeffs[j] = {}
             for ipar, par in enumerate(self.all_parents[j]):
-                coeffs[j][par] = self.fit_results[j]['model'].coef_[ipar]
+                coeffs[j][par] = self.fit_results[j]["model"].coef_[ipar]
         return coeffs
 
     def get_val_matrix(self):
@@ -202,14 +213,15 @@ class Models():
         """
 
         coeffs = self.get_coefs()
-        val_matrix = np.zeros((self.N, self.N, self.tau_max + 1, ))
+        val_matrix = np.zeros((self.N, self.N, self.tau_max + 1,))
 
         for j in list(coeffs):
             for par in list(coeffs[j]):
                 i, tau = par
-                val_matrix[i,j,abs(tau)] = coeffs[j][par]
+                val_matrix[i, j, abs(tau)] = coeffs[j][par]
 
         return val_matrix
+
 
 class LinearMediation(Models):
     r"""Linear mediation analysis for time series models.
@@ -290,12 +302,14 @@ class LinearMediation(Models):
         Level of verbosity.
     """
 
-    def __init__(self,
-                 dataframe,
-                 model_params=None,
-                 data_transform=sklearn.preprocessing.StandardScaler(),
-                 mask_type=None,
-                 verbosity=0):
+    def __init__(
+        self,
+        dataframe,
+        model_params=None,
+        data_transform=sklearn.preprocessing.StandardScaler(),
+        mask_type=None,
+        verbosity=0,
+    ):
         # Initialize the member variables to None
         self.phi = None
         self.psi = None
@@ -305,12 +319,14 @@ class LinearMediation(Models):
         if model_params is None:
             model_params = {}
         this_model = sklearn.linear_model.LinearRegression(**model_params)
-        Models.__init__(self,
-                        dataframe=dataframe,
-                        model=this_model,
-                        data_transform=data_transform,
-                        mask_type=mask_type,
-                        verbosity=verbosity)
+        Models.__init__(
+            self,
+            dataframe=dataframe,
+            model=this_model,
+            data_transform=data_transform,
+            mask_type=mask_type,
+            verbosity=verbosity,
+        )
 
     def fit_model(self, all_parents, tau_max=None):
         """Fit linear time series model.
@@ -332,13 +348,15 @@ class LinearMediation(Models):
             for parent in all_parents[j]:
                 var, lag = parent
                 if lag == 0:
-                    raise ValueError("all_parents cannot contain "
-                                     "contemporaneous links. Remove these.")
+                    raise ValueError(
+                        "all_parents cannot contain "
+                        "contemporaneous links. Remove these."
+                    )
 
         # Fit the model using the base class
-        self.fit_results = self.get_fit(all_parents=all_parents,
-                                        selected_variables=None,
-                                        tau_max=tau_max)
+        self.fit_results = self.get_fit(
+            all_parents=all_parents, selected_variables=None, tau_max=tau_max
+        )
         # Cache the results in the member variables
         coeffs = self.get_coefs()
         self.phi = self._get_phi(coeffs)
@@ -349,14 +367,17 @@ class LinearMediation(Models):
         """Checks validity of some parameters."""
 
         if len(X) != 1 or len(Y) != 1:
-            raise ValueError("X must be of form [(i, -tau)] and Y = [(j, 0)], "
-                             "but are X = %s, Y=%s" % (X, Y))
+            raise ValueError(
+                "X must be of form [(i, -tau)] and Y = [(j, 0)], "
+                "but are X = %s, Y=%s" % (X, Y)
+            )
 
         i, tau = X[0]
 
         if abs(tau) > self.tau_max:
-            raise ValueError("X must be of form [(i, -tau)] with"
-                             " tau <= tau_max")
+            raise ValueError(
+                "X must be of form [(i, -tau)] with tau <= tau_max"
+            )
 
         if k is not None and (k < 0 or k >= self.N):
             raise ValueError("k must be in [0, N)")
@@ -429,7 +450,7 @@ class LinearMediation(Models):
 
         psi_k[0] = np.identity(self.N)
         phi_k = np.copy(phi)
-        phi_k[1:, k, :] = 0.
+        phi_k[1:, k, :] = 0.0
         for n in range(1, self.tau_max + 1):
             psi_k[n] = np.zeros((self.N, self.N))
             for s in range(1, n + 1):
@@ -459,12 +480,12 @@ class LinearMediation(Models):
 
         return all_psi_k
 
-    def get_val_matrix(self, ):
+    def get_val_matrix(self,):
         """Returns the matrix of linear coefficients.
 
         Requires fit_model() before. An entry val_matrix[i,j,tau] gives the
         coefficient of the link from i to j at lag tau. Lag=0 is always set
-        to zero for LinearMediation, use Models class for contemporaneous 
+        to zero for LinearMediation, use Models class for contemporaneous
         models.
 
         Returns
@@ -517,8 +538,9 @@ class LinearMediation(Models):
                 for t in range(max_lag):
                     link_start = self.net_to_tsg(i, t - tau, max_lag)
                     link_end = self.net_to_tsg(j, t, max_lag)
-                    if (0 <= link_start and
-                            (link_start % max_lag) <= (link_end % max_lag)):
+                    if 0 <= link_start and (link_start % max_lag) <= (
+                        link_end % max_lag
+                    ):
                         if val_matrix is not None:
                             tsg[link_start, link_end] = val_matrix[i, j, tau]
                         else:
@@ -555,28 +577,32 @@ class LinearMediation(Models):
         path_val_matrix = np.zeros((self.N, self.N, self.tau_max + 1))
 
         # Get mediation of path variables
-        path_node_array = (self.psi.reshape(1, self.tau_max + 1, self.N, self.N)
-                           - self.all_psi_k)[:, abs(tau), j, i]
+        path_node_array = (
+            self.psi.reshape(1, self.tau_max + 1, self.N, self.N)
+            - self.all_psi_k
+        )[:, abs(tau), j, i]
 
         # Get involved links
         val_matrix = self.phi.transpose()
-        link_matrix = val_matrix != 0.
+        link_matrix = val_matrix != 0.0
 
         max_lag = link_matrix.shape[2] + 1
 
         # include_neighbors = False because True would allow
         # --> o -- motifs in networkx.all_simple_paths as paths, but
         # these are blocked...
-        tsg = self.get_tsg(link_matrix, val_matrix=val_matrix,
-                           include_neighbors=False)
+        tsg = self.get_tsg(
+            link_matrix, val_matrix=val_matrix, include_neighbors=False
+        )
 
         if include_neighbors:
             # Add contemporaneous links only at source node
             for m, n in zip(*np.where(link_matrix[:, :, 0])):
                 # print m,n
                 if m != n:
-                    tsg[self.net_to_tsg(m, max_lag - tau - 1, max_lag),
-                        self.net_to_tsg(n, max_lag - tau - 1, max_lag)
+                    tsg[
+                        self.net_to_tsg(m, max_lag - tau - 1, max_lag),
+                        self.net_to_tsg(n, max_lag - tau - 1, max_lag),
                     ] = val_matrix[m, n, 0]
 
         tsg_path_val_matrix = np.zeros(tsg.shape)
@@ -584,13 +610,11 @@ class LinearMediation(Models):
         graph = networkx.DiGraph(tsg)
         pathways = []
 
-        for path in networkx.all_simple_paths(graph,
-                                              source=self.net_to_tsg(i,
-                                                                     max_lag - tau - 1,
-                                                                     max_lag),
-                                              target=self.net_to_tsg(j,
-                                                                     max_lag - 0 - 1,
-                                                                     max_lag)):
+        for path in networkx.all_simple_paths(
+            graph,
+            source=self.net_to_tsg(i, max_lag - tau - 1, max_lag),
+            target=self.net_to_tsg(j, max_lag - 0 - 1, max_lag),
+        ):
             pathways.append([self.tsg_to_net(p, max_lag) for p in path])
             for ip, p in enumerate(path[1:]):
                 tsg_path_val_matrix[path[ip], p] = tsg[path[ip], p]
@@ -599,15 +623,15 @@ class LinearMediation(Models):
                 link_start = self.tsg_to_net(path[ip], max_lag)
                 link_end = self.tsg_to_net(p, max_lag)
                 delta_tau = abs(link_end[1] - link_start[1])
-                path_val_matrix[link_start[0],
-                                link_end[0],
-                                delta_tau] = val_matrix[link_start[0],
-                                                        link_end[0],
-                                                        delta_tau]
+                path_val_matrix[
+                    link_start[0], link_end[0], delta_tau
+                ] = val_matrix[link_start[0], link_end[0], delta_tau]
 
-        graph_data = {'path_node_array': path_node_array,
-                      'path_val_matrix': path_val_matrix,
-                      'tsg_path_val_matrix': tsg_path_val_matrix}
+        graph_data = {
+            "path_node_array": path_node_array,
+            "path_val_matrix": path_val_matrix,
+            "tsg_path_val_matrix": tsg_path_val_matrix,
+        }
 
         return graph_data
 
@@ -694,7 +718,7 @@ class LinearMediation(Models):
         mce = self.psi[abs(tau), j, i] - self.all_psi_k[k, abs(tau), j, i]
         return mce
 
-    def get_ace(self, i, lag_mode='absmax', exclude_i=True):
+    def get_ace(self, i, lag_mode="absmax", exclude_i=True):
         """Returns the average causal effect.
 
         This is the average causal effect (ACE) emanating from variable i to any
@@ -718,18 +742,18 @@ class LinearMediation(Models):
             Average Causal Effect.
         """
 
-        all_but_i = np.ones(self.N, dtype='bool')
+        all_but_i = np.ones(self.N, dtype="bool")
         if exclude_i:
             all_but_i[i] = False
 
-        if lag_mode == 'absmax':
+        if lag_mode == "absmax":
             return np.abs(self.psi[1:, all_but_i, i]).max(axis=0).mean()
-        elif lag_mode == 'all_lags':
+        elif lag_mode == "all_lags":
             return np.abs(self.psi[1:, all_but_i, i]).mean()
         else:
             raise ValueError("lag_mode = %s not implemented" % lag_mode)
 
-    def get_all_ace(self, lag_mode='absmax', exclude_i=True):
+    def get_all_ace(self, lag_mode="absmax", exclude_i=True):
         """Returns the average causal effect for all variables.
 
         This is the average causal effect (ACE) emanating from variable i to any
@@ -757,7 +781,7 @@ class LinearMediation(Models):
 
         return ace
 
-    def get_acs(self, j, lag_mode='absmax', exclude_j=True):
+    def get_acs(self, j, lag_mode="absmax", exclude_j=True):
         """Returns the average causal susceptibility.
 
         This is the Average Causal Susceptibility (ACS) affecting a variable j
@@ -781,18 +805,18 @@ class LinearMediation(Models):
             Average Causal Susceptibility.
         """
 
-        all_but_j = np.ones(self.N, dtype='bool')
+        all_but_j = np.ones(self.N, dtype="bool")
         if exclude_j:
             all_but_j[j] = False
 
-        if lag_mode == 'absmax':
+        if lag_mode == "absmax":
             return np.abs(self.psi[1:, j, all_but_j]).max(axis=0).mean()
-        elif lag_mode == 'all_lags':
+        elif lag_mode == "all_lags":
             return np.abs(self.psi[1:, j, all_but_j]).mean()
         else:
             raise ValueError("lag_mode = %s not implemented" % lag_mode)
 
-    def get_all_acs(self, lag_mode='absmax', exclude_j=True):
+    def get_all_acs(self, lag_mode="absmax", exclude_j=True):
         """Returns the average causal susceptibility.
 
         This is the Average Causal Susceptibility (ACS) for each variable from
@@ -820,8 +844,9 @@ class LinearMediation(Models):
 
         return acs
 
-    def get_amce(self, k, lag_mode='absmax',
-                 exclude_k=True, exclude_self_effects=True):
+    def get_amce(
+        self, k, lag_mode="absmax", exclude_k=True, exclude_self_effects=True
+    ):
         """Returns the average mediated causal effect.
 
         This is the Average Mediated Causal Effect (AMCE) through a variable k
@@ -847,7 +872,7 @@ class LinearMediation(Models):
             Average Mediated Causal Effect.
         """
 
-        all_but_k = np.ones(self.N, dtype='bool')
+        all_but_k = np.ones(self.N, dtype="bool")
         if exclude_k:
             all_but_k[k] = False
             N_new = self.N - 1
@@ -857,7 +882,7 @@ class LinearMediation(Models):
         if exclude_self_effects:
             weights = np.identity(N_new) == False
         else:
-            weights = np.ones((N_new, N_new), dtype='bool')
+            weights = np.ones((N_new, N_new), dtype="bool")
 
         if self.tau_max < 2:
             raise ValueError("Mediation only nonzero for tau_max >= 2")
@@ -865,17 +890,19 @@ class LinearMediation(Models):
         all_mce = self.psi[2:, :, :] - self.all_psi_k[k, 2:, :, :]
         # all_mce[:, range(self.N), range(self.N)] = 0.
 
-        if lag_mode == 'absmax':
-            return np.average(np.abs(all_mce[:, all_but_k, :]
-                                     [:, :, all_but_k]
-                                     ).max(axis=0), weights=weights)
-        elif lag_mode == 'all_lags':
+        if lag_mode == "absmax":
+            return np.average(
+                np.abs(all_mce[:, all_but_k, :][:, :, all_but_k]).max(axis=0),
+                weights=weights,
+            )
+        elif lag_mode == "all_lags":
             return np.abs(all_mce[:, all_but_k, :][:, :, all_but_k]).mean()
         else:
             raise ValueError("lag_mode = %s not implemented" % lag_mode)
 
-    def get_all_amce(self, lag_mode='absmax',
-                     exclude_k=True, exclude_self_effects=True):
+    def get_all_amce(
+        self, lag_mode="absmax", exclude_k=True, exclude_self_effects=True
+    ):
         """Returns the average mediated causal effect.
 
         This is the Average Mediated Causal Effect (AMCE) through all variables
@@ -900,10 +927,12 @@ class LinearMediation(Models):
         """
         amce = np.zeros(self.N)
         for k in range(self.N):
-            amce[k] = self.get_amce(k,
-                                    lag_mode=lag_mode,
-                                    exclude_k=exclude_k,
-                                    exclude_self_effects=exclude_self_effects)
+            amce[k] = self.get_amce(
+                k,
+                lag_mode=lag_mode,
+                exclude_k=exclude_k,
+                exclude_self_effects=exclude_self_effects,
+            )
 
         return amce
 
@@ -939,34 +968,40 @@ class Prediction(Models, PCMCI):
         Level of verbosity.
     """
 
-    def __init__(self,
-                 dataframe,
-                 train_indices,
-                 test_indices,
-                 prediction_model,
-                 cond_ind_test=None,
-                 data_transform=None,
-                 verbosity=0):
+    def __init__(
+        self,
+        dataframe,
+        train_indices,
+        test_indices,
+        prediction_model,
+        cond_ind_test=None,
+        data_transform=None,
+        verbosity=0,
+    ):
 
         # Default value for the mask
         mask = dataframe.mask
         if mask is None:
-            mask = np.zeros(dataframe.values.shape, dtype='bool')
+            mask = np.zeros(dataframe.values.shape, dtype="bool")
         # Get the dataframe shape
         T = len(dataframe.values)
         # Have the default dataframe be the training data frame
         train_mask = np.copy(mask)
         train_mask[[t for t in range(T) if t not in train_indices]] = True
-        self.dataframe = DataFrame(dataframe.values,
-                                   mask=train_mask,
-                                   missing_flag=dataframe.missing_flag)
+        self.dataframe = DataFrame(
+            dataframe.values,
+            mask=train_mask,
+            missing_flag=dataframe.missing_flag,
+        )
         # Initialize the models baseclass with the training dataframe
-        Models.__init__(self,
-                        dataframe=self.dataframe,
-                        model=prediction_model,
-                        data_transform=data_transform,
-                        mask_type='y',
-                        verbosity=verbosity)
+        Models.__init__(
+            self,
+            dataframe=self.dataframe,
+            model=prediction_model,
+            data_transform=data_transform,
+            mask_type="y",
+            verbosity=verbosity,
+        )
 
         # Build the testing dataframe as well
         self.test_mask = np.copy(mask)
@@ -975,13 +1010,15 @@ class Prediction(Models, PCMCI):
         # Setup the PCMCI instance
         if cond_ind_test is not None:
             # Force the masking
-            cond_ind_test.set_mask_type('y')
+            cond_ind_test.set_mask_type("y")
             cond_ind_test.verbosity = verbosity
-            PCMCI.__init__(self,
-                           dataframe=self.dataframe,
-                           cond_ind_test=cond_ind_test,
-                           selected_variables=None,
-                           verbosity=verbosity)
+            PCMCI.__init__(
+                self,
+                dataframe=self.dataframe,
+                cond_ind_test=cond_ind_test,
+                selected_variables=None,
+                verbosity=verbosity,
+            )
 
         # Set the member variables
         self.cond_ind_test = cond_ind_test
@@ -991,14 +1028,16 @@ class Prediction(Models, PCMCI):
         self.fitted_model = None
         self.test_array = None
 
-    def get_predictors(self,
-                       selected_targets=None,
-                       selected_links=None,
-                       steps_ahead=1,
-                       tau_max=1,
-                       pc_alpha=0.2,
-                       max_conds_dim=None,
-                       max_combinations=1):
+    def get_predictors(
+        self,
+        selected_targets=None,
+        selected_links=None,
+        steps_ahead=1,
+        tau_max=1,
+        pc_alpha=0.2,
+        max_conds_dim=None,
+        max_combinations=1,
+    ):
         """Estimate predictors using PC1 algorithm.
 
         Wrapper around PCMCI.run_pc_stable that estimates causal predictors.
@@ -1043,17 +1082,24 @@ class Prediction(Models, PCMCI):
         self.selected_variables = range(self.N)
         if selected_targets is not None:
             self.selected_variables = selected_targets
-        predictors = self.run_pc_stable(selected_links=selected_links,
-                                        tau_min=steps_ahead,
-                                        tau_max=tau_max,
-                                        save_iterations=False,
-                                        pc_alpha=pc_alpha,
-                                        max_conds_dim=max_conds_dim,
-                                        max_combinations=max_combinations)
+        predictors = self.run_pc_stable(
+            selected_links=selected_links,
+            tau_min=steps_ahead,
+            tau_max=tau_max,
+            save_iterations=False,
+            pc_alpha=pc_alpha,
+            max_conds_dim=max_conds_dim,
+            max_combinations=max_combinations,
+        )
         return predictors
 
-    def fit(self, target_predictors,
-            selected_targets=None, tau_max=None, return_data=False):
+    def fit(
+        self,
+        target_predictors,
+        selected_targets=None,
+        tau_max=None,
+        return_data=False,
+    ):
         r"""Fit time series model.
 
         Wrapper around ``Models.get_fit()``. To each variable in
@@ -1091,17 +1137,21 @@ class Prediction(Models, PCMCI):
             if target not in list(self.target_predictors):
                 raise ValueError("No predictors given for target %s" % target)
 
-        self.fitted_model = \
-            self.get_fit(all_parents=self.target_predictors,
-                         selected_variables=self.selected_targets,
-                         tau_max=tau_max,
-                         return_data=return_data)
+        self.fitted_model = self.get_fit(
+            all_parents=self.target_predictors,
+            selected_variables=self.selected_targets,
+            tau_max=tau_max,
+            return_data=return_data,
+        )
         return self
 
-    def predict(self, target,
-                new_data=None,
-                pred_params=None,
-                cut_off='max_lag_or_tau_max'):
+    def predict(
+        self,
+        target,
+        new_data=None,
+        pred_params=None,
+        cut_off="max_lag_or_tau_max",
+    ):
         r"""Predict target variable with fitted model.
 
         Uses the model.predict() function of the sklearn model.
@@ -1137,16 +1187,18 @@ class Prediction(Models, PCMCI):
         elif isinstance(target, list):
             target_list = target
         else:
-            raise ValueError("target must be either int or list of integers "
-                             "indicating the index of the variables to "
-                             "predict.")
+            raise ValueError(
+                "target must be either int or list of integers "
+                "indicating the index of the variables to "
+                "predict."
+            )
 
         if target_list == range(self.N):
-            return_type = 'array'
+            return_type = "array"
         elif len(target_list) == 1:
-            return_type = 'series'
+            return_type = "series"
         else:
-            return_type = 'list'
+            return_type = "list"
 
         pred_list = []
         for target in target_list:
@@ -1169,62 +1221,80 @@ class Prediction(Models, PCMCI):
             # Check if we've passed a new dataframe object
             test_array = None
             if new_data is not None:
-                test_array, _ = new_data.construct_array(X, Y, Z,
-                                                         tau_max=self.tau_max,
-                                                         mask_type=self.mask_type,
-                                                         cut_off=cut_off,
-                                                         verbosity=self.verbosity)
+                test_array, _ = new_data.construct_array(
+                    X,
+                    Y,
+                    Z,
+                    tau_max=self.tau_max,
+                    mask_type=self.mask_type,
+                    cut_off=cut_off,
+                    verbosity=self.verbosity,
+                )
             # Otherwise use the default values
             else:
-                test_array, _ = \
-                    self.dataframe.construct_array(X, Y, Z,
-                                                   tau_max=self.tau_max,
-                                                   mask=self.test_mask,
-                                                   mask_type=self.mask_type,
-                                                   cut_off=cut_off,
-                                                   verbosity=self.verbosity)
+                test_array, _ = self.dataframe.construct_array(
+                    X,
+                    Y,
+                    Z,
+                    tau_max=self.tau_max,
+                    mask=self.test_mask,
+                    mask_type=self.mask_type,
+                    cut_off=cut_off,
+                    verbosity=self.verbosity,
+                )
             # Transform the data if needed
-            a_transform = self.fitted_model[target]['data_transform']
+            a_transform = self.fitted_model[target]["data_transform"]
             if a_transform is not None:
                 test_array = a_transform.transform(X=test_array.T).T
             # Cache the test array
             self.test_array = test_array
             # Run the predictor
-            pred_list.append(self.fitted_model[target]['model'].predict(
-                X=test_array[2:].T, **pred_params))
+            pred_list.append(
+                self.fitted_model[target]["model"].predict(
+                    X=test_array[2:].T, **pred_params
+                )
+            )
 
-        if return_type == 'series':
+        if return_type == "series":
             return pred_list[0]
-        elif return_type == 'list':
+        elif return_type == "list":
             return pred_list
-        elif return_type == 'array':
+        elif return_type == "array":
             return np.array(pred_list).transpose()
 
     def get_train_array(self, j):
         """Returns training array."""
-        return self.fitted_model[j]['data']
+        return self.fitted_model[j]["data"]
 
     def get_test_array(self):
         """Returns test array."""
         return self.test_array
 
-if __name__ == '__main__':
-   
+
+if __name__ == "__main__":
+
     import tigramite.data_processing as pp
 
     np.random.seed(6)
 
-    def lin_f(x): return x
- 
-    links = {0: [((0, -1), 0.8, lin_f)],
-             1: [((1, -1), 0.8, lin_f), ((0, -1), 0.5, lin_f)],
-             2: [((2, -1), 0.8, lin_f), ((1, 0), -0.6, lin_f)]}
+    def lin_f(x):
+        return x
+
+    links = {
+        0: [((0, -1), 0.8, lin_f)],
+        1: [((1, -1), 0.8, lin_f), ((0, -1), 0.5, lin_f)],
+        2: [((2, -1), 0.8, lin_f), ((1, 0), -0.6, lin_f)],
+    }
     # noises = [np.random.randn for j in links.keys()]
     data, nonstat = pp.structural_causal_process(links, T=10000)
     true_parents = pp._get_true_parent_neighbor_dict(links)
     dataframe = pp.DataFrame(data)
- 
-    med = Models(dataframe=dataframe, model=sklearn.linear_model.LinearRegression(), data_transform=None)
+
+    med = Models(
+        dataframe=dataframe,
+        model=sklearn.linear_model.LinearRegression(),
+        data_transform=None,
+    )
     # Fit the model
     med.get_fit(all_parents=true_parents, tau_max=3)
 

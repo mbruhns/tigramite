@@ -12,7 +12,11 @@
 *.pdf
 
 # Distribution / packaging
+.idea/
 venv/
 build/
 dist/
 *.egg-info/
+
+# Specific files
+playground.py

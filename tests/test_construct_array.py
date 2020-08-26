@@ -24,6 +24,7 @@ def rand_node(t_min, n_max, t_max=0, n_min=0):
     rand_time = np.random.randint(t_min, t_max)
     return (rand_node, rand_time)
 
+
 def gen_nodes(n_nodes, seed, t_min, n_max):
     """
     Generate some random nodes to tests
@@ -40,31 +41,39 @@ def gen_nodes(n_nodes, seed, t_min, n_max):
 
 
 # CONSTRUCT ARRAY TESTING ######################################################
-@pytest.fixture(params=[
-    # Parameterize the array construction
-    #(X, Y, Z) nodes,        t_max, m_val, mask_type
-    (gen_nodes(3, 0, -3, 9), 3,     False, None),           # Few nodes
-    (gen_nodes(7, 1, -3, 9), 3,     False, None),           # More nodes
-    (gen_nodes(7, 2, -3, 3), 3,     False, None),           # Repeated nodes
-    (gen_nodes(7, 3, -3, 9), 3,     True,  None),           # Missing vals
-    (gen_nodes(7, 4, -3, 9), 3,     True,  ['x']),          # M-val + masked x
-    (gen_nodes(7, 4, -3, 9), 3,     True,  ['x','y']),      # M-val + masked xy
-    (gen_nodes(3, 5, -4, 9), 2,     False, ['x']),          # masked x
-    (gen_nodes(3, 6, -4, 9), 2,     False, ['y']),          # masked y
-    (gen_nodes(3, 7, -4, 9), 2,     False, ['z']),          # masked z
-    (gen_nodes(3, 7, -4, 9), 2,     False, ['x','y','z'])]) # mask xyz
+@pytest.fixture(
+    params=[
+        # Parameterize the array construction
+        # (X, Y, Z) nodes,        t_max, m_val, mask_type
+        (gen_nodes(3, 0, -3, 9), 3, False, None),  # Few nodes
+        (gen_nodes(7, 1, -3, 9), 3, False, None),  # More nodes
+        (gen_nodes(7, 2, -3, 3), 3, False, None),  # Repeated nodes
+        (gen_nodes(7, 3, -3, 9), 3, True, None),  # Missing vals
+        (gen_nodes(7, 4, -3, 9), 3, True, ["x"]),  # M-val + masked x
+        (gen_nodes(7, 4, -3, 9), 3, True, ["x", "y"]),  # M-val + masked xy
+        (gen_nodes(3, 5, -4, 9), 2, False, ["x"]),  # masked x
+        (gen_nodes(3, 6, -4, 9), 2, False, ["y"]),  # masked y
+        (gen_nodes(3, 7, -4, 9), 2, False, ["z"]),  # masked z
+        (gen_nodes(3, 7, -4, 9), 2, False, ["x", "y", "z"]),
+    ]
+)  # mask xyz
 def cstrct_array_params(request):
     return request.param
 
+
 def test_construct_array(cstrct_array_params):
     # Unpack the parameters
-    (x_nds, y_nds, z_nds), tau_max, missing_vals, mask_type =\
-        cstrct_array_params
+    (
+        (x_nds, y_nds, z_nds),
+        tau_max,
+        missing_vals,
+        mask_type,
+    ) = cstrct_array_params
     # Make some fake data
     data = np.arange(1000).reshape(10, 100).T
     # Get the needed parameters from the data
     T, N = data.shape
-    max_lag = 2*tau_max
+    max_lag = 2 * tau_max
     n_times = T - max_lag
 
     # When testing masking and missing value flags, we will remove time slices,
@@ -73,9 +82,9 @@ def test_construct_array(cstrct_array_params):
     n_rows_masked = 0
 
     # Make a fake mask
-    data_mask = np.zeros_like(data, dtype='bool')
+    data_mask = np.zeros_like(data, dtype="bool")
     if mask_type is not None:
-        for var, nodes in zip(['x', 'y', 'z'], [x_nds, y_nds, z_nds]):
+        for var, nodes in zip(["x", "y", "z"], [x_nds, y_nds, z_nds]):
             if var in mask_type:
                 # Get the first node
                 a_nd, a_tau = nodes[0]
@@ -99,24 +108,37 @@ def test_construct_array(cstrct_array_params):
 
     # Construct the array
     data_f = pp.DataFrame(data, data_mask, missing_flag)
-    array, xyz = data_f.construct_array(x_nds, y_nds, z_nds,
-                                        tau_max=tau_max,
-                                        mask_type=mask_type,
-                                        verbosity=VERBOSITY)
+    array, xyz = data_f.construct_array(
+        x_nds,
+        y_nds,
+        z_nds,
+        tau_max=tau_max,
+        mask_type=mask_type,
+        verbosity=VERBOSITY,
+    )
     # Ensure x_nds, y_nds, z_ndes are unique
     x_nds = list(OrderedDict.fromkeys(x_nds))
     y_nds = list(OrderedDict.fromkeys(y_nds))
     z_nds = list(OrderedDict.fromkeys(z_nds))
-    z_nds = [node for node in z_nds
-             if (node not in x_nds) and (node not in y_nds)]
+    z_nds = [
+        node for node in z_nds if (node not in x_nds) and (node not in y_nds)
+    ]
 
     # Get the expected results
-    expect_array = np.array([list(range(data[time-n_times, node],
-                                        data[time-n_times, node]+n_times))
-                             for node, time in x_nds + y_nds + z_nds])
-    expect_xyz = np.array([0 for _ in x_nds] +\
-                          [1 for _ in y_nds] +\
-                          [2 for _ in z_nds])
+    expect_array = np.array(
+        [
+            list(
+                range(
+                    data[time - n_times, node],
+                    data[time - n_times, node] + n_times,
+                )
+            )
+            for node, time in x_nds + y_nds + z_nds
+        ]
+    )
+    expect_xyz = np.array(
+        [0 for _ in x_nds] + [1 for _ in y_nds] + [2 for _ in z_nds]
+    )
     # Apply the mask, which always blocks the latest time of the 0th node of the
     # masked variable, which removes the first n time slices in the returned
     # array

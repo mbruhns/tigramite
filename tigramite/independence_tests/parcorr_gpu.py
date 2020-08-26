@@ -8,8 +8,27 @@ from __future__ import print_function
 from scipy import stats
 import numpy as np
 import sys
+from independence_tests_base import CondIndTest
+import time
 
-from .independence_tests_base import CondIndTest
+
+def timeit(method):
+    def timed(*args, **kw):
+        ts = time.time()
+        result = method(*args, **kw)
+        te = time.time()
+        if "log_time" in kw:
+            name = kw.get("log_name", method.__name__.upper())
+            kw["log_time"][name] = int((te - ts) * 1000)
+        else:
+            print("%r  %2.2f ms" % (method.__name__, (te - ts) * 1000))
+        return result
+
+    return timed
+
+
+def foo():
+    pass
 
 
 class ParCorr(CondIndTest):
@@ -55,6 +74,7 @@ class ParCorr(CondIndTest):
 
         CondIndTest.__init__(self, **kwargs)
 
+    @timeit
     def _get_single_residuals(
         self, array, target_var, standardize=True, return_means=False
     ):
@@ -93,9 +113,9 @@ class ParCorr(CondIndTest):
         if standardize:
             array -= array.mean(axis=1).reshape(dim, 1)
             array /= array.std(axis=1).reshape(dim, 1)
-            if np.isnan(array).sum() != 0:
+            if np.any(np.isnan(array)):
                 raise ValueError(
-                    "nans after standardizing, " "possibly constant array!"
+                    "nans after standardizing, possibly constant array!"
                 )
 
         y = array[target_var, :]
@@ -113,6 +133,8 @@ class ParCorr(CondIndTest):
             return (resid, mean)
         return resid
 
+    @timeit
+    # TODO: Can xyz be removed?
     def get_dependence_measure(self, array, xyz):
         """Return partial correlation.
 
@@ -138,6 +160,7 @@ class ParCorr(CondIndTest):
         val, _ = stats.pearsonr(x_vals, y_vals)
         return val
 
+    @timeit
     def get_shuffle_significance(
         self, array, xyz, value, return_null_dist=False
     ):
@@ -186,6 +209,7 @@ class ParCorr(CondIndTest):
             return pval, null_dist
         return pval
 
+    @timeit
     def get_analytic_significance(self, value, T, dim):
         """Returns analytic p-value from Student's t-test for the Pearson
         correlation coefficient.
@@ -223,6 +247,7 @@ class ParCorr(CondIndTest):
 
         return pval
 
+    @timeit
     def get_analytic_confidence(self, value, df, conf_lev):
         """Returns analytic confidence interval for correlation coefficient.
 
@@ -258,6 +283,7 @@ class ParCorr(CondIndTest):
         )
         return (conf_lower, conf_upper)
 
+    @timeit
     def get_model_selection_criterion(self, j, parents, tau_max=0):
         """Returns Akaike's Information criterion modulo constants.
 
@@ -307,3 +333,20 @@ class ParCorr(CondIndTest):
         # Get AIC
         score = T * np.log(rss) + 2.0 * p
         return score
+
+
+if __name__ == "__main__":
+
+    import matplotlib.pyplot as plt
+
+    plt.style.use("ggplot")
+
+    # Setup test case
+
+    size = 50000
+    data = np.random.normal(loc=0, scale=1, size=(3, size))
+
+    parcorr = ParCorr()
+
+    parcorr._get_single_residuals(array=data, target_var=1)
+    parcorr.get_dependence_measure(array=data)

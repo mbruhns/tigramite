@@ -11,6 +11,7 @@ import sys
 
 from .independence_tests_base import CondIndTest
 
+
 class ParCorr(CondIndTest):
     r"""Partial correlation test.
 
@@ -48,15 +49,15 @@ class ParCorr(CondIndTest):
         return self._measure
 
     def __init__(self, **kwargs):
-        self._measure = 'par_corr'
+        self._measure = "par_corr"
         self.two_sided = True
         self.residual_based = True
 
         CondIndTest.__init__(self, **kwargs)
 
-    def _get_single_residuals(self, array, target_var,
-                              standardize=True,
-                              return_means=False):
+    def _get_single_residuals(
+        self, array, target_var, standardize=True, return_means=False
+    ):
         """Returns residuals of linear multiple regression.
 
         Performs a OLS regression of the variable indexed by target_var on the
@@ -93,8 +94,9 @@ class ParCorr(CondIndTest):
             array -= array.mean(axis=1).reshape(dim, 1)
             array /= array.std(axis=1).reshape(dim, 1)
             if np.isnan(array).sum() != 0:
-                raise ValueError("nans after standardizing, "
-                                 "possibly constant array!")
+                raise ValueError(
+                    "nans after standardizing, possibly constant array!"
+                )
 
         y = array[target_var, :]
 
@@ -136,8 +138,9 @@ class ParCorr(CondIndTest):
         val, _ = stats.pearsonr(x_vals, y_vals)
         return val
 
-    def get_shuffle_significance(self, array, xyz, value,
-                                 return_null_dist=False):
+    def get_shuffle_significance(
+        self, array, xyz, value, return_null_dist=False
+    ):
         """Returns p-value for shuffle significance test.
 
         For residual-based test statistics only the residuals are shuffled.
@@ -164,17 +167,20 @@ class ParCorr(CondIndTest):
         array_resid = np.array([x_vals, y_vals])
         xyz_resid = np.array([0, 1])
 
-        null_dist = self._get_shuffle_dist(array_resid, xyz_resid,
-                                           self.get_dependence_measure,
-                                           sig_samples=self.sig_samples,
-                                           sig_blocklength=self.sig_blocklength,
-                                           verbosity=self.verbosity)
+        null_dist = self._get_shuffle_dist(
+            array_resid,
+            xyz_resid,
+            self.get_dependence_measure,
+            sig_samples=self.sig_samples,
+            sig_blocklength=self.sig_blocklength,
+            verbosity=self.verbosity,
+        )
 
         pval = (null_dist >= np.abs(value)).mean()
 
         # Adjust p-value for two-sided measures
-        if pval < 1.:
-            pval *= 2.
+        if pval < 1.0:
+            pval *= 2.0
 
         if return_null_dist:
             return pval, null_dist
@@ -211,7 +217,7 @@ class ParCorr(CondIndTest):
         elif abs(abs(value) - 1.0) <= sys.float_info.min:
             pval = 0.0
         else:
-            trafo_val = value * np.sqrt(deg_f/(1. - value*value))
+            trafo_val = value * np.sqrt(deg_f / (1.0 - value * value))
             # Two sided significance level
             pval = stats.t.sf(np.abs(trafo_val), deg_f) * 2
 
@@ -239,17 +245,18 @@ class ParCorr(CondIndTest):
             Upper and lower confidence bound of confidence interval.
         """
         # Confidence interval is two-sided
-        c_int = (1. - (1. - conf_lev) / 2.)
+        c_int = 1.0 - (1.0 - conf_lev) / 2.0
 
-        value_tdist = value * np.sqrt(df) / np.sqrt(1. - value**2)
-        conf_lower = (stats.t.ppf(q=1. - c_int, df=df, loc=value_tdist)
-                      / np.sqrt(df + stats.t.ppf(q=1. - c_int, df=df,
-                                                 loc=value_tdist)**2))
-        conf_upper = (stats.t.ppf(q=c_int, df=df, loc=value_tdist)
-                      / np.sqrt(df + stats.t.ppf(q=c_int, df=df,
-                                                 loc=value_tdist)**2))
+        value_tdist = value * np.sqrt(df) / np.sqrt(1.0 - value ** 2)
+        conf_lower = stats.t.ppf(
+            q=1.0 - c_int, df=df, loc=value_tdist
+        ) / np.sqrt(
+            df + stats.t.ppf(q=1.0 - c_int, df=df, loc=value_tdist) ** 2
+        )
+        conf_upper = stats.t.ppf(q=c_int, df=df, loc=value_tdist) / np.sqrt(
+            df + stats.t.ppf(q=c_int, df=df, loc=value_tdist) ** 2
+        )
         return (conf_lower, conf_upper)
-
 
     def get_model_selection_criterion(self, j, parents, tau_max=0):
         """Returns Akaike's Information criterion modulo constants.
@@ -277,22 +284,26 @@ class ParCorr(CondIndTest):
         """
 
         Y = [(j, 0)]
-        X = [(j, 0)]   # dummy variable here
+        X = [(j, 0)]  # dummy variable here
         Z = parents
-        array, xyz = self.dataframe.construct_array(X=X, Y=Y, Z=Z,
-                                                    tau_max=tau_max,
-                                                    mask_type=self.mask_type,
-                                                    return_cleaned_xyz=False,
-                                                    do_checks=True,
-                                                    verbosity=self.verbosity)
+        array, xyz = self.dataframe.construct_array(
+            X=X,
+            Y=Y,
+            Z=Z,
+            tau_max=tau_max,
+            mask_type=self.mask_type,
+            return_cleaned_xyz=False,
+            do_checks=True,
+            verbosity=self.verbosity,
+        )
 
         dim, T = array.shape
 
         y = self._get_single_residuals(array, target_var=1, return_means=False)
         # Get RSS
-        rss = (y**2).sum()
+        rss = (y ** 2).sum()
         # Number of parameters
         p = dim - 1
         # Get AIC
-        score = T * np.log(rss) + 2. * p
+        score = T * np.log(rss) + 2.0 * p
         return score

@@ -10,6 +10,7 @@ import numpy as np
 
 from .independence_tests_base import CondIndTest
 
+
 class CMIsymb(CondIndTest):
     r"""Conditional mutual information test based on discrete estimator.
 
@@ -50,6 +51,7 @@ class CMIsymb(CondIndTest):
     **kwargs :
         Arguments passed on to parent class CondIndTest.
     """
+
     @property
     def measure(self):
         """
@@ -57,33 +59,39 @@ class CMIsymb(CondIndTest):
         """
         return self._measure
 
-    def __init__(self,
-                 n_symbs=None,
-                 significance='shuffle_test',
-                 sig_blocklength=1,
-                 conf_blocklength=1,
-                 **kwargs):
+    def __init__(
+        self,
+        n_symbs=None,
+        significance="shuffle_test",
+        sig_blocklength=1,
+        conf_blocklength=1,
+        **kwargs
+    ):
         # Setup the member variables
-        self._measure = 'cmi_symb'
+        self._measure = "cmi_symb"
         self.two_sided = False
         self.residual_based = False
         self.recycle_residuals = False
         self.n_symbs = n_symbs
         # Call the parent constructor
-        CondIndTest.__init__(self,
-                             significance=significance,
-                             sig_blocklength=sig_blocklength,
-                             conf_blocklength=conf_blocklength,
-                             **kwargs)
+        CondIndTest.__init__(
+            self,
+            significance=significance,
+            sig_blocklength=sig_blocklength,
+            conf_blocklength=conf_blocklength,
+            **kwargs
+        )
 
         if self.verbosity > 0:
             print("n_symbs = %s" % self.n_symbs)
             print("")
 
         if self.conf_blocklength is None or self.sig_blocklength is None:
-            warnings.warn("Automatic block-length estimations from decay of "
-                          "autocorrelation may not be sensical for discrete "
-                          "data")
+            warnings.warn(
+                "Automatic block-length estimations from decay of "
+                "autocorrelation may not be sensical for discrete "
+                "data"
+            )
 
     def _bincount_hist(self, symb_array, weights=None):
         """Computes histogram from symbolic array.
@@ -111,19 +119,25 @@ class CMIsymb(CondIndTest):
         else:
             n_symbs = self.n_symbs
             if n_symbs < int(symb_array.max() + 1):
-                raise ValueError("n_symbs must be >= symb_array.max() + 1 = {}".format(symb_array.max() + 1))
+                raise ValueError(
+                    "n_symbs must be >= symb_array.max() + 1 = {}".format(
+                        symb_array.max() + 1
+                    )
+                )
 
-        if 'int' not in str(symb_array.dtype):
-            raise ValueError("Input data must of integer type, where each "
-                             "number indexes a symbol.")
+        if "int" not in str(symb_array.dtype):
+            raise ValueError(
+                "Input data must of integer type, where each "
+                "number indexes a symbol."
+            )
 
         dim, T = symb_array.shape
 
-        flathist = np.zeros((n_symbs ** dim), dtype='int16')
-        multisymb = np.zeros(T, dtype='int64')
+        flathist = np.zeros((n_symbs ** dim), dtype="int16")
+        multisymb = np.zeros(T, dtype="int64")
         if weights is not None:
-            flathist = np.zeros((n_symbs ** dim), dtype='float32')
-            multiweights = np.ones(T, dtype='float32')
+            flathist = np.zeros((n_symbs ** dim), dtype="float32")
+            multiweights = np.ones(T, dtype="float32")
 
         for i in range(dim):
             multisymb += symb_array[i, :] * n_symbs ** i
@@ -133,13 +147,16 @@ class CMIsymb(CondIndTest):
         if weights is None:
             result = np.bincount(multisymb)
         else:
-            result = (np.bincount(multisymb, weights=multiweights)
-                      / multiweights.sum())
+            result = (
+                np.bincount(multisymb, weights=multiweights)
+                / multiweights.sum()
+            )
 
-        flathist[:len(result)] += result
+        flathist[: len(result)] += result
 
-        hist = flathist.reshape(tuple([n_symbs, n_symbs] +
-                                      [n_symbs for i in range(dim - 2)])).T
+        hist = flathist.reshape(
+            tuple([n_symbs, n_symbs] + [n_symbs for i in range(dim - 2)])
+        ).T
 
         return hist
 
@@ -170,20 +187,25 @@ class CMIsymb(CondIndTest):
             gfunc = np.zeros(T + 1)
             data = np.arange(1, T + 1, 1)
             gfunc[1:] = data * np.log(data)
+
             def plogp_func(time):
                 return gfunc[time]
+
             return np.vectorize(plogp_func)
 
         plogp = _plogp_vector(T)
         hxyz = (-(plogp(hist)).sum() + plogp(T)) / float(T)
         hxz = (-(plogp(hist.sum(axis=1))).sum() + plogp(T)) / float(T)
         hyz = (-(plogp(hist.sum(axis=0))).sum() + plogp(T)) / float(T)
-        hz = (-(plogp(hist.sum(axis=0).sum(axis=0))).sum()+plogp(T)) / float(T)
+        hz = (-(plogp(hist.sum(axis=0).sum(axis=0))).sum() + plogp(T)) / float(
+            T
+        )
         val = hxz + hyz - hz - hxyz
         return val
 
-    def get_shuffle_significance(self, array, xyz, value,
-                                 return_null_dist=False):
+    def get_shuffle_significance(
+        self, array, xyz, value, return_null_dist=False
+    ):
         """Returns p-value for shuffle significance test.
 
         For residual-based test statistics only the residuals are shuffled.
@@ -205,11 +227,14 @@ class CMIsymb(CondIndTest):
             p-value
         """
 
-        null_dist = self._get_shuffle_dist(array, xyz,
-                                           self.get_dependence_measure,
-                                           sig_samples=self.sig_samples,
-                                           sig_blocklength=self.sig_blocklength,
-                                           verbosity=self.verbosity)
+        null_dist = self._get_shuffle_dist(
+            array,
+            xyz,
+            self.get_dependence_measure,
+            sig_samples=self.sig_samples,
+            sig_blocklength=self.sig_blocklength,
+            verbosity=self.verbosity,
+        )
 
         pval = (null_dist >= value).mean()
 
