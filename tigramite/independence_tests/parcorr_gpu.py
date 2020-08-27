@@ -10,7 +10,9 @@ import numpy as np
 import sys
 from independence_tests_base import CondIndTest
 import time
-import ray
+import torch
+from pytorch_aux import *
+import matplotlib.pyplot as plt
 
 
 def timeit(method):
@@ -129,8 +131,65 @@ class ParCorr(CondIndTest):
             return (resid, mean)
         return resid
 
+    def _get_single_residuals_gpu(
+        self, array, target_var, standardize=True, return_means=False
+    ):
+        """Returns residuals of linear multiple regression.
+
+        Performs a OLS regression of the variable indexed by target_var on the
+        conditions Z. Here array is assumed to contain X and Y as the first two
+        rows with the remaining rows (if present) containing the conditions Z.
+        Optionally returns the estimated regression line.
+
+        Parameters
+        ----------
+        array : array-like
+            data array with X, Y, Z in rows and observations in columns
+
+        target_var : {0, 1}
+            Variable to regress out conditions from.
+
+        standardize : bool, optional (default: True)
+            Whether to standardize the array beforehand. Must be used for
+            partial correlation.
+
+        return_means : bool, optional (default: False)
+            Whether to return the estimated regression line.
+
+        Returns
+        -------
+        resid [, mean] : array-like
+            The residual of the regression and optionally the estimated line.
+        """
+
+        dim, T = array.shape
+        dim_z = dim - 2
+
+        # Standardize
+        if standardize:
+            array -= array.mean(dim=1).reshape(dim, 1)
+            array /= array.std(dim=1).reshape(dim, 1)
+            if torch.isnan(array).any():
+                raise ValueError(
+                    "nans after standardizing, possibly constant array!"
+                )
+
+        y = array[target_var, :]
+
+        if dim_z > 0:
+            z = array[2:, :].clone().T
+            beta_hat = torch.lstsq(z, y.unsqueeze(-1))[0]
+            mean = torch.dot(z.squeeze(), beta_hat.squeeze())
+            resid = y - mean
+        else:
+            resid = y
+            mean = None
+
+        if return_means:
+            return (resid, mean)
+        return resid
+
     # TODO: Can xyz be removed?
-    @timeit
     def get_dependence_measure(self, array, xyz):
         """Return partial correlation.
 
@@ -154,6 +213,31 @@ class ParCorr(CondIndTest):
         x_vals = self._get_single_residuals(array, target_var=0)
         y_vals = self._get_single_residuals(array, target_var=1)
         val, _ = stats.pearsonr(x_vals, y_vals)
+        return val
+
+    def get_dependence_measure_torch(self, array):
+        """Return partial correlation.
+
+        Estimated as the Pearson correlation of the residuals of a linear
+        OLS regression.
+
+        Parameters
+        ----------
+        array : array-like
+            data array with X, Y, Z in rows and observations in columns
+
+        xyz : array of ints
+            XYZ identifier array of shape (dim,).
+
+        Returns
+        -------
+        val : float
+            Partial correlation coefficient.
+        """
+
+        x_vals = self._get_single_residuals_gpu(array, target_var=0)
+        y_vals = self._get_single_residuals_gpu(array, target_var=1)
+        val = pearsonr(array[0, :], array[1, :])
         return val
 
     def get_shuffle_significance(
@@ -329,9 +413,36 @@ class ParCorr(CondIndTest):
 
 if __name__ == "__main__":
 
-
-    size = 10 ** 7
-    data = np.random.normal(size=(3, size))
+    import pandas as pd
+    import seaborn as sns
+    plt.style.use("ggplot")
 
     parcorr = ParCorr()
-    parcorr.get_dependence_measure(array=data, xyz=None)
+    #numpy_time = []
+    #torch_time = []
+    measure_lst = []
+    #for size in np.logspace(1, 5, num=4):
+    for size in [250, 500, 750, 1000, 2000]:
+        for _ in range(1000):
+            size = int(size)
+            data_numpy = np.random.normal(size=(3, size))
+            ts = time.time()
+            parcorr.get_dependence_measure(array=data_numpy, xyz=None)
+            numpy_time = time.time() - ts
+            # numpy_time.append(time_)
+            measure = {"Size": size, "Time": numpy_time,
+                       "Library": "NumPy"}
+            measure_lst.append(measure)
+
+            data_torch = torch.randn((3, size))
+            ts = time.time()
+            parcorr.get_dependence_measure_torch(array=data_torch)
+            torch_time = time.time() - ts
+            measure = {"Size": size, "Time": torch_time,
+                       "Library": "TorchPy"}
+            measure_lst.append(measure)
+
+    df = pd.DataFrame(measure_lst)
+
+    sns.lineplot(x="Size", y="Time", hue="Library", data=df)
+    plt.show()
