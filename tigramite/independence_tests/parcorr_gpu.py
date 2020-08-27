@@ -423,7 +423,7 @@ if __name__ == "__main__":
     measure_lst = []
     #for size in np.logspace(1, 5, num=4):
     for size in [250, 500, 750, 1000, 2000]:
-        for _ in range(1000):
+        for _ in range(500):
             size = int(size)
             data_numpy = np.random.normal(size=(3, size))
             ts = time.time()

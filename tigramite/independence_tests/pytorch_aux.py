@@ -13,10 +13,10 @@ def pearsonr(x, y):
     -------
     r_val : float
         pearsonr correlation coefficient between x and y
-    
+
     Scipy docs ref:
         https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.pearsonr.html
-    
+
     Scipy code ref:
         https://github.com/scipy/scipy/blob/v0.19.0/scipy/stats/stats.py#L2975-L3033
     Example:
@@ -42,7 +42,7 @@ def corrcoef(x):
     Arguments
     ---------
     x : 2D torch.Tensor
-    
+
     Returns
     -------
     c : torch.Tensor
@@ -50,7 +50,7 @@ def corrcoef(x):
 
     Numpy docs ref:
         https://docs.scipy.org/doc/numpy/reference/generated/numpy.corrcoef.html
-    Numpy code ref: 
+    Numpy code ref:
         https://github.com/numpy/numpy/blob/v1.12.0/numpy/lib/function_base.py#L2933-L3013
 
     Example:
