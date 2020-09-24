@@ -63,12 +63,7 @@ def _make_nice_axes(ax, where=None, skip=2, color=None):
     if where is None:
         where = ["left", "bottom"]
     if color is None:
-        color = {
-            "left": "black",
-            "right": "black",
-            "bottom": "black",
-            "top": "black",
-        }
+        color = {"left": "black", "right": "black", "bottom": "black", "top": "black"}
 
     if type(skip) == int:
         skip_x = skip_y = skip
@@ -86,9 +81,7 @@ def _make_nice_axes(ax, where=None, skip=2, color=None):
             if loc == "top" or loc == "bottom":
                 pyplot.setp(ax.get_xticklines(), color=color[loc])
         elif loc in [
-            item
-            for item in ["left", "bottom", "right", "top"]
-            if item not in where
+            item for item in ["left", "bottom", "right", "top"] if item not in where
         ]:
             spine.set_color("none")  # don't draw spine
 
@@ -265,15 +258,11 @@ def _add_timeseries(
 
     if last:
         _make_nice_axes(
-            ax,
-            where=["left", "bottom"],
-            skip=(skip_ticks_data_x, skip_ticks_data_y),
+            ax, where=["left", "bottom"], skip=(skip_ticks_data_x, skip_ticks_data_y)
         )
         ax.set_xlabel(r"%s" % time_label, fontsize=label_fontsize)
     else:
-        _make_nice_axes(
-            ax, where=["left"], skip=(skip_ticks_data_x, skip_ticks_data_y)
-        )
+        _make_nice_axes(ax, where=["left"], skip=(skip_ticks_data_x, skip_ticks_data_y))
     # ax.get_xaxis().get_major_formatter().set_useOffset(False)
 
     ax.xaxis.set_major_formatter(FormatStrFormatter("%.0f"))
@@ -387,9 +376,7 @@ def plot_timeseries(
             label_fontsize=label_fontsize,
         )
 
-    fig.subplots_adjust(
-        bottom=0.15, top=0.9, left=0.15, right=0.95, hspace=0.3
-    )
+    fig.subplots_adjust(bottom=0.15, top=0.9, left=0.15, right=0.95, hspace=0.3)
     pyplot.tight_layout()
 
     if save_name is not None:
@@ -553,15 +540,11 @@ class setup_matrix:
 
                 # Make nice axis
                 _make_nice_axes(
-                    self.axes_dict[(i, j)],
-                    where=["left", "bottom"],
-                    skip=(1, 1),
+                    self.axes_dict[(i, j)], where=["left", "bottom"], skip=(1, 1)
                 )
                 if x_base is not None:
                     self.axes_dict[(i, j)].xaxis.set_major_locator(
-                        ticker.FixedLocator(
-                            np.arange(0, self.tau_max + 1, x_base)
-                        )
+                        ticker.FixedLocator(np.arange(0, self.tau_max + 1, x_base))
                     )
                     if x_base / 2.0 % 1 == 0:
                         self.axes_dict[(i, j)].xaxis.set_minor_locator(
@@ -794,9 +777,7 @@ class setup_matrix:
             for ij in list(self.axes_dict):
                 i = ij[0]
                 j = ij[1]
-                self.axes_dict[(i, j)].set_xticklabels(
-                    self.lag_array[:: self.x_base]
-                )
+                self.axes_dict[(i, j)].set_xticklabels(self.lag_array[:: self.x_base])
 
         if name is not None:
             self.fig.savefig(name)
@@ -855,6 +836,9 @@ def _draw_network_with_curved_edges(
     ax.set_yticks([])
 
     N = len(G)
+
+    # This fixes a positioning bug in matplotlib.
+    ax.scatter(0, 0, zorder=-10, alpha=0)
 
     def draw_edge(
         ax,
@@ -917,14 +901,7 @@ def _draw_network_with_curved_edges(
             elif d.get("outer_edge_type") == "<->":
                 arrowstyle = "<->, head_width=0.4, head_length=1"
                 # linewidth = width*factor
-            elif d.get("outer_edge_type") in [
-                "o->",
-                "-->",
-                "<-o",
-                "<--",
-                "<-x",
-                "x->",
-            ]:
+            elif d.get("outer_edge_type") in ["o->", "-->", "<-o", "<--", "<-x", "x->"]:
                 arrowstyle = "->, head_width=0.4, head_length=1"
 
         else:
@@ -959,14 +936,7 @@ def _draw_network_with_curved_edges(
                 arrowstyle = "-"
             elif d.get("inner_edge_type") == "<->":
                 arrowstyle = "<->, head_width=0.4, head_length=1"
-            elif d.get("inner_edge_type") in [
-                "o->",
-                "-->",
-                "<-o",
-                "<--",
-                "<-x",
-                "x->",
-            ]:
+            elif d.get("inner_edge_type") in ["o->", "-->", "<-o", "<--", "<-x", "x->"]:
                 arrowstyle = "->, head_width=0.4, head_length=1"
 
             linestyle = d.get("inner_edge_style")
@@ -984,7 +954,7 @@ def _draw_network_with_curved_edges(
             connectionstyle=f"arc3,rad={rad}",
             mutation_scale=width,
             lw=width / 2,
-            alpha=1,
+            alpha=alpha,
             linestyle=linestyle,
             color=facecolor,
             clip_on=False,
@@ -1003,7 +973,8 @@ def _draw_network_with_curved_edges(
         start = vertices[0]
         end = vertices[-1]
 
-        # This must be added to avoid rescaling of the plot.
+        # This must be added to avoid rescaling of the plot, when no 'o'
+        # or 'x' is added to the graph.
         ax.scatter(*start, zorder=-10, alpha=0)
 
         if outer_edge:
@@ -1307,9 +1278,6 @@ def _draw_network_with_curved_edges(
 
         return rad
 
-    # This must be added to avoid rescaling of the plot.
-    ax.scatter(0.0, 0.0, zorder=-10, alpha=0)
-
     # Collect all edge weights to get color scale
     all_links_weights = []
     all_links_edge_weights = []
@@ -1360,10 +1328,7 @@ def _draw_network_with_curved_edges(
 
             cb_e.outline.remove()
             cax_e.set_xlabel(
-                link_colorbar_label,
-                labelpad=1,
-                fontsize=label_fontsize,
-                zorder=-10,
+                link_colorbar_label, labelpad=1, fontsize=label_fontsize, zorder=-10
             )
 
     ##
@@ -1440,9 +1405,7 @@ def _draw_network_with_curved_edges(
                     ],
                     frameon=False,
                 )
-                cb_n = pyplot.colorbar(
-                    data_to_rgb, cax=cax_n, orientation="horizontal"
-                )
+                cb_n = pyplot.colorbar(data_to_rgb, cax=cax_n, orientation="horizontal")
                 # try:
                 cb_n.set_ticks(
                     np.arange(
@@ -1457,9 +1420,7 @@ def _draw_network_with_curved_edges(
                 cb_n.outline.remove()
                 # cb_n.set_ticks()
                 cax_n.set_xlabel(
-                    node_rings[ring]["label"],
-                    labelpad=1,
-                    fontsize=label_fontsize,
+                    node_rings[ring]["label"], labelpad=1, fontsize=label_fontsize
                 )
         else:
             colors = None
@@ -1483,11 +1444,6 @@ def _draw_network_with_curved_edges(
                     zorder=-ring - 1,
                 )
 
-                # ax.scatter(pos[n][0], pos[n][1],
-                #            s=node_sizes[:ring + 1].sum(axis=0)[n] ** 2,
-                #            facecolors=standard_color,
-                #            edgecolors=standard_color, alpha=alpha,
-                #            clip_on=False, linewidth=.1, zorder=-ring)
             else:
                 c = Ellipse(
                     pos[n],
@@ -1499,14 +1455,6 @@ def _draw_network_with_curved_edges(
                     zorder=-ring - 1,
                 )
 
-                # ax.scatter(pos[n][0], pos[n][1],
-                #            s=node_sizes[:ring + 1].sum(axis=0)[n] ** 2,
-                #            facecolors=colors[n], edgecolors='grey',
-                #            alpha=alpha,
-                #            clip_on=False, linewidth=1., zorder=-ring)
-
-            # c = Ellipse(pos[n], width=standard_size * node_aspect, height=standard_size,
-            #             facecolor='darkgray', edgecolor='darkgray', zorder=0)
             ax.add_patch(c)
 
             # avoiding attribute error raised by changes in networkx
@@ -1531,11 +1479,12 @@ def _draw_network_with_curved_edges(
     # Draw edges
     seen = {}
     for (u, v, d) in G.edges(data=True):
+        if d.get("no_links"):
+            d["inner_edge_alpha"] = 1e-8
+            d["outer_edge_alpha"] = 1e-8
         if u != v:
             if d["outer_edge"]:
-                seen[(u, v)] = draw_edge(
-                    ax, u, v, d, seen, arrowstyle, outer_edge=True
-                )
+                seen[(u, v)] = draw_edge(ax, u, v, d, seen, arrowstyle, outer_edge=True)
             if d["inner_edge"]:
                 seen[(u, v)] = draw_edge(ax, u, v, d, seen, outer_edge=False)
 
@@ -1636,7 +1585,7 @@ def plot_graph(
         Node tick mark interval.
     cmap_nodes : str, optional (default: 'OrRd')
         Colormap for links.
-    node_size : int, optional (default: 20)
+    node_size : int, optional (default: 0.3)
         Node size.
     node_aspect : float, optional (default: None)
         Ratio between the heigth and width of the varible nodes.
@@ -1667,11 +1616,24 @@ def plot_graph(
         fig, ax = fig_ax
 
     (link_matrix, val_matrix, link_width, link_attribute) = _check_matrices(
-        link_matrix, val_matrix, link_width, link_attribute
+        link_matrix, val_matrix, link_width, link_attribute, sig_thres
     )
 
     N, N, dummy = val_matrix.shape
     tau_max = dummy - 1
+
+    if np.count_nonzero(link_matrix != "") == np.count_nonzero(
+        np.diagonal(link_matrix) != ""
+    ):
+        diagonal = True
+    else:
+        diagonal = False
+
+    if np.count_nonzero(link_matrix == "") == link_matrix.size or diagonal:
+        link_matrix[0, 1, 0] = "---"
+        no_links = True
+    else:
+        no_links = False
 
     if var_names is None:
         var_names = range(N)
@@ -1689,11 +1651,15 @@ def plot_graph(
     net = np.any(link_matrix_upper != "", axis=2)
     G = nx.DiGraph(net)
 
+    # This handels Graphs with no links.
+    # nx.draw(G, alpha=0, zorder=-10)
+
     node_color = np.zeros(N)
     # list of all strengths for color map
     all_strengths = []
     # Add attributes, contemporaneous and lagged links are handled separately
     for (u, v, dic) in G.edges(data=True):
+        dic["no_links"] = no_links
         # average lagfunc for link u --> v ANDOR u -- v
         if tau_max > 0:
             # argmax of absolute maximum
@@ -1711,9 +1677,7 @@ def plot_graph(
             #                       sig_thres[u, v][0]) or
             #                      (np.abs(val_matrix[v, u][0]) >=
             #                       sig_thres[v, u][0]))
-
             dic["inner_edge"] = link_matrix_upper[u, v, 0]
-
             dic["inner_edge_type"] = link_matrix_upper[u, v, 0]
             dic["inner_edge_alpha"] = alpha
             dic["inner_edge_color"] = val_matrix[u, v, 0]
@@ -1764,9 +1728,7 @@ def plot_graph(
                 dic["outer_edge_width"] = arrow_linewidth
             else:
                 dic["outer_edge_width"] = (
-                    link_width[u, v, argmax]
-                    / link_width.max()
-                    * arrow_linewidth
+                    link_width[u, v, argmax] / link_width.max() * arrow_linewidth
                 )
 
             if link_attribute is None:
@@ -1783,15 +1745,11 @@ def plot_graph(
             # d['min_ensemble_frac'])
             if tau_max > 0:
                 lags = np.abs(val_matrix[u, v][1:]).argsort()[::-1] + 1
-                sig_lags = (
-                    np.where(link_matrix_upper[u, v, 1:] != "")[0] + 1
-                ).tolist()
+                sig_lags = (np.where(link_matrix_upper[u, v, 1:] != "")[0] + 1).tolist()
             else:
                 lags, sig_lags = [], []
             if lag_array is not None:
-                dic["label"] = str(
-                    [lag_array[l] for l in lags if l in sig_lags]
-                )[1:-1]
+                dic["label"] = str([lag_array[l] for l in lags if l in sig_lags])[1:-1]
             else:
                 dic["label"] = str([l for l in lags if l in sig_lags])[1:-1]
         else:
@@ -1904,25 +1862,19 @@ def _reverse_patt(patt):
     #     return '-->'
 
 
-def _check_matrices(link_matrix, val_matrix, link_width, link_attribute):
+def _check_matrices(link_matrix, val_matrix, link_width, link_attribute, sig_thres):
     if link_matrix is None and (val_matrix is None or sig_thres is None):
         raise ValueError(
-            "Need to specify either val_matrix together with sig_thres, or"
-            " link_matrix"
+            "Need to specify either val_matrix together with sig_thres, or link_matrix"
         )
 
     if link_matrix is not None:
         pass
-    elif (
-        link_matrix is None
-        and sig_thres is not None
-        and val_matrix is not None
-    ):
+    elif link_matrix is None and sig_thres is not None and val_matrix is not None:
         link_matrix = np.abs(val_matrix) >= sig_thres
     else:
         raise ValueError(
-            "Need to specify either val_matrix together with sig_thres, or"
-            " link_matrix"
+            "Need to specify either val_matrix together with sig_thres, or link_matrix"
         )
 
     if link_matrix.dtype != "<U3":
@@ -1932,15 +1884,9 @@ def _check_matrices(link_matrix, val_matrix, link_width, link_attribute):
         link_matrix[:] = ""
         for i, j, tau in zip(*np.where(old_matrix)):
             if tau == 0:
-                if old_matrix[i, j, 0] == 1 and old_matrix[j, i, 0] == 0:
+                if old_matrix[j, i, 0] == 0:
                     link_matrix[i, j, 0] = "-->"
                     link_matrix[j, i, 0] = "<--"
-                elif old_matrix[i, j, 0] == 0 and old_matrix[j, i, 0] == 1:
-                    link_matrix[i, j, 0] = "<--"
-                    link_matrix[j, i, 0] = "-->"
-                elif old_matrix[i, j, 0] == 2 and old_matrix[j, i, 0] == 2:
-                    link_matrix[i, j, 0] = "x-x"
-                    link_matrix[j, i, 0] = "x-x"
                 else:
                     link_matrix[i, j, 0] = "o-o"
                     link_matrix[j, i, 0] = "o-o"
@@ -1953,24 +1899,19 @@ def _check_matrices(link_matrix, val_matrix, link_width, link_attribute):
             if tau == 0:
                 if link_matrix[i, j, 0] != _reverse_patt(link_matrix[j, i, 0]):
                     raise ValueError(
-                        "link_matrix needs to have consistent lag-zero"
-                        " patterns (eg link_matrix[i,j,0]='-->' requires"
-                        " link_matrix[j,i,0]='<--')"
+                        "link_matrix needs to have consistent lag-zero patterns (eg"
+                        " link_matrix[i,j,0]='-->' requires link_matrix[j,i,0]='<--')"
                     )
                 if (
                     val_matrix is not None
                     and val_matrix[i, j, 0] != val_matrix[j, i, 0]
                 ):
-                    raise ValueError(
-                        "val_matrix needs to be symmetric for lag-zero"
-                    )
+                    raise ValueError("val_matrix needs to be symmetric for lag-zero")
                 if (
                     link_width is not None
                     and link_width[i, j, 0] != link_width[j, i, 0]
                 ):
-                    raise ValueError(
-                        "link_width needs to be symmetric for lag-zero"
-                    )
+                    raise ValueError("link_width needs to be symmetric for lag-zero")
                 if (
                     link_attribute is not None
                     and link_attribute[i, j, 0] != link_attribute[j, i, 0]
@@ -2075,7 +2016,7 @@ def plot_time_series_graph(
         Link tick mark interval.
     cmap_edges : str, optional (default: 'RdBu_r')
         Colormap for links.
-    node_size : int, optional (default: 20)
+    node_size : int, optional (default: 0.1)
         Node size.
     node_aspect : float, optional (default: None)
         Ratio between the heigth and width of the varible nodes.
@@ -2108,12 +2049,18 @@ def plot_time_series_graph(
         fig, ax = fig_ax
 
     (link_matrix, val_matrix, link_width, link_attribute) = _check_matrices(
-        link_matrix, val_matrix, link_width, link_attribute
+        link_matrix, val_matrix, link_width, link_attribute, sig_thres
     )
 
     N, N, dummy = link_matrix.shape
     tau_max = dummy - 1
     max_lag = tau_max + 1
+
+    if np.count_nonzero(link_matrix == "") == link_matrix.size:
+        link_matrix[0, 1, 0] = "---"
+        no_links = True
+    else:
+        no_links = False
 
     if var_names is None:
         var_names = range(N)
@@ -2134,9 +2081,7 @@ def plot_time_series_graph(
     tsg_width = np.zeros((N * max_lag, N * max_lag))
     tsg_style = np.zeros((N * max_lag, N * max_lag), dtype=link_matrix.dtype)
     if link_attribute is not None:
-        tsg_attr = np.zeros(
-            (N * max_lag, N * max_lag), dtype=link_attribute.dtype
-        )
+        tsg_attr = np.zeros((N * max_lag, N * max_lag), dtype=link_attribute.dtype)
 
     # Only draw link in one direction among contemp
     # Remove lower triangle
@@ -2147,29 +2092,24 @@ def plot_time_series_graph(
         for t in range(max_lag):
             if (
                 0 <= translate(i, t - tau)
-                and translate(i, t - tau) % max_lag
-                <= translate(j, t) % max_lag
+                and translate(i, t - tau) % max_lag <= translate(j, t) % max_lag
             ):
 
                 tsg[
                     translate(i, t - tau), translate(j, t)
                 ] = 1.0  # val_matrix[i, j, tau]
-                tsg_val[translate(i, t - tau), translate(j, t)] = val_matrix[
+                tsg_val[translate(i, t - tau), translate(j, t)] = val_matrix[i, j, tau]
+                tsg_style[translate(i, t - tau), translate(j, t)] = link_matrix[
                     i, j, tau
                 ]
-                tsg_style[
-                    translate(i, t - tau), translate(j, t)
-                ] = link_matrix[i, j, tau]
                 if link_width is not None:
                     tsg_width[translate(i, t - tau), translate(j, t)] = (
-                        link_width[i, j, tau]
-                        / link_width.max()
-                        * arrow_linewidth
+                        link_width[i, j, tau] / link_width.max() * arrow_linewidth
                     )
                 if link_attribute is not None:
-                    tsg_attr[
-                        translate(i, t - tau), translate(j, t)
-                    ] = link_attribute[i, j, tau]
+                    tsg_attr[translate(i, t - tau), translate(j, t)] = link_attribute[
+                        i, j, tau
+                    ]
 
     G = nx.DiGraph(tsg)
 
@@ -2178,7 +2118,7 @@ def plot_time_series_graph(
     all_strengths = []
     # Add attributes, contemporaneous and lagged links are handled separately
     for (u, v, dic) in G.edges(data=True):
-
+        dic["no_links"] = no_links
         if u != v:
             dic["inner_edge"] = False
             dic["outer_edge"] = True
@@ -2189,13 +2129,9 @@ def plot_time_series_graph(
 
             if link_width is None:
                 # fraction of nonzero values
-                dic["outer_edge_width"] = dic[
-                    "inner_edge_width"
-                ] = arrow_linewidth
+                dic["outer_edge_width"] = dic["inner_edge_width"] = arrow_linewidth
             else:
-                dic["outer_edge_width"] = dic["inner_edge_width"] = tsg_width[
-                    u, v
-                ]
+                dic["outer_edge_width"] = dic["inner_edge_width"] = tsg_width[u, v]
 
             if link_attribute is None:
                 dic["outer_edge_attribute"] = None
@@ -2237,12 +2173,7 @@ def plot_time_series_graph(
             pos[n * max_lag + tau] = pos_tmp[order[n] * max_lag + tau]
 
     node_rings = {
-        0: {
-            "sizes": None,
-            "color_array": None,
-            "label": "",
-            "colorbar": False,
-        }
+        0: {"sizes": None, "color_array": None, "label": "", "colorbar": False,}
     }
 
     node_labels = ["" for i in range(N * max_lag)]
@@ -2277,9 +2208,7 @@ def plot_time_series_graph(
     )
 
     for i in range(N):
-        trans = transforms.blended_transform_factory(
-            fig.transFigure, ax.transData
-        )
+        trans = transforms.blended_transform_factory(fig.transFigure, ax.transData)
         ax.text(
             label_space_left,
             pos[order[i] * max_lag][1],
@@ -2291,9 +2220,7 @@ def plot_time_series_graph(
         )
 
     for tau in np.arange(max_lag - 1, -1, -1):
-        trans = transforms.blended_transform_factory(
-            ax.transData, fig.transFigure
-        )
+        trans = transforms.blended_transform_factory(ax.transData, fig.transFigure)
         if tau == max_lag - 1:
             ax.text(
                 pos[tau][0],
@@ -2396,7 +2323,7 @@ def plot_mediation_time_series_graph(
         Node tick mark interval.
     cmap_nodes : str, optional (default: 'OrRd')
         Colormap for links.
-    node_size : int, optional (default: 20)
+    node_size : int, optional (default: 0.1)
         Node size.
     node_aspect : float, optional (default: None)
         Ratio between the heigth and width of the varible nodes.
@@ -2444,6 +2371,19 @@ def plot_mediation_time_series_graph(
     def translate(row, lag):
         return row * max_lag + lag
 
+    if np.count_nonzero(tsg_path_val_matrix) == np.count_nonzero(
+        np.diagonal(tsg_path_val_matrix)
+    ):
+        diagonal = True
+    else:
+        diagonal = False
+
+    if np.count_nonzero(tsg_path_val_matrix) == tsg_path_val_matrix.size or diagonal:
+        tsg_path_val_matrix[0, 1] = 1
+        no_links = True
+    else:
+        no_links = False
+
     # Define graph links by absolute maximum (positive or negative like for
     # partial correlation)
     tsg = tsg_path_val_matrix
@@ -2456,7 +2396,7 @@ def plot_mediation_time_series_graph(
     all_strengths = []
     # Add attributes, contemporaneous and lagged links are handled separately
     for (u, v, dic) in G.edges(data=True):
-
+        dic["no_links"] = no_links
         dic["outer_edge_attribute"] = None
 
         if u != v:
@@ -2576,9 +2516,7 @@ def plot_mediation_time_series_graph(
     )
 
     for i in range(N):
-        trans = transforms.blended_transform_factory(
-            fig.transFigure, ax.transData
-        )
+        trans = transforms.blended_transform_factory(fig.transFigure, ax.transData)
         ax.text(
             label_space_left,
             pos[order[i] * max_lag][1],
@@ -2590,9 +2528,7 @@ def plot_mediation_time_series_graph(
         )
 
     for tau in np.arange(max_lag - 1, -1, -1):
-        trans = transforms.blended_transform_factory(
-            ax.transData, fig.transFigure
-        )
+        trans = transforms.blended_transform_factory(ax.transData, fig.transFigure)
         if tau == max_lag - 1:
             ax.text(
                 pos[tau][0],
@@ -2705,7 +2641,7 @@ def plot_mediation_graph(
         Node tick mark interval.
     cmap_nodes : str, optional (default: 'OrRd')
         Colormap for links.
-    node_size : int, optional (default: 20)
+    node_size : int, optional (default: 0.3)
         Node size.
     node_aspect : float, optional (default: None)
         Ratio between the heigth and width of the varible nodes.
@@ -2740,6 +2676,17 @@ def plot_mediation_graph(
     N, N, dummy = val_matrix.shape
     tau_max = dummy - 1
 
+    if np.count_nonzero(val_matrix) == np.count_nonzero(np.diagonal(val_matrix)):
+        diagonal = True
+    else:
+        diagonal = False
+
+    if np.count_nonzero(val_matrix) == val_matrix.size or diagonal:
+        val_matrix[0, 1, 0] = 1
+        no_links = True
+    else:
+        no_links = False
+
     if var_names is None:
         var_names = range(N)
 
@@ -2756,7 +2703,7 @@ def plot_mediation_graph(
     # Add attributes, contemporaneous and lagged links are handled separately
     for (u, v, dic) in G.edges(data=True):
         dic["outer_edge_attribute"] = None
-
+        dic["no_links"] = no_links
         # average lagfunc for link u --> v ANDOR u -- v
         if tau_max > 0:
             # argmax of absolute maximum
@@ -2809,9 +2756,7 @@ def plot_mediation_graph(
                 dic["outer_edge_width"] = arrow_linewidth
             else:
                 dic["outer_edge_width"] = (
-                    link_width[u, v, argmax]
-                    / link_width.max()
-                    * arrow_linewidth
+                    link_width[u, v, argmax] / link_width.max() * arrow_linewidth
                 )
 
             # value at argmax of average
@@ -2826,9 +2771,7 @@ def plot_mediation_graph(
             else:
                 lags, sig_lags = [], []
             if lag_array is not None:
-                dic["label"] = str(
-                    [lag_array[l] for l in lags if l in sig_lags]
-                )[1:-1]
+                dic["label"] = str([lag_array[l] for l in lags if l in sig_lags])[1:-1]
             else:
                 dic["label"] = str([l for l in lags if l in sig_lags])[1:-1]
         else:
@@ -2960,9 +2903,7 @@ def plot_tsg(links, X, Y, Z=None, anc_x=None, anc_y=None, anc_xy=None):
                             and varlag2node(i, t - tau) % max_lag
                             <= varlag2node(j, t) % max_lag
                         ):
-                            tsg[
-                                varlag2node(i, t - tau), varlag2node(j, t)
-                            ] = 1.0
+                            tsg[varlag2node(i, t - tau), varlag2node(j, t)] = 1.0
 
         return tsg
 
@@ -3021,19 +2962,13 @@ def plot_tsg(links, X, Y, Z=None, anc_x=None, anc_y=None, anc_xy=None):
     node_color[:] = 0
 
     if anc_x is not None:
-        for n in [
-            varlag2node(itau[0], max_lag - 1 + itau[1]) for itau in anc_x
-        ]:
+        for n in [varlag2node(itau[0], max_lag - 1 + itau[1]) for itau in anc_x]:
             node_color[n] = 3
     if anc_y is not None:
-        for n in [
-            varlag2node(itau[0], max_lag - 1 + itau[1]) for itau in anc_y
-        ]:
+        for n in [varlag2node(itau[0], max_lag - 1 + itau[1]) for itau in anc_y]:
             node_color[n] = 4
     if anc_xy is not None:
-        for n in [
-            varlag2node(itau[0], max_lag - 1 + itau[1]) for itau in anc_xy
-        ]:
+        for n in [varlag2node(itau[0], max_lag - 1 + itau[1]) for itau in anc_xy]:
             node_color[n] = 5
 
     for x in X:
@@ -3150,9 +3085,7 @@ def plot_tsg(links, X, Y, Z=None, anc_x=None, anc_y=None, anc_xy=None):
     )
 
     for i in range(N):
-        trans = transforms.blended_transform_factory(
-            fig.transFigure, ax.transData
-        )
+        trans = transforms.blended_transform_factory(fig.transFigure, ax.transData)
         ax.text(
             label_space_left,
             pos[order[i] * max_lag][1],
@@ -3164,9 +3097,7 @@ def plot_tsg(links, X, Y, Z=None, anc_x=None, anc_y=None, anc_xy=None):
         )
 
     for tau in np.arange(max_lag - 1, -1, -1):
-        trans = transforms.blended_transform_factory(
-            ax.transData, fig.transFigure
-        )
+        trans = transforms.blended_transform_factory(ax.transData, fig.transFigure)
         if tau == max_lag - 1:
             ax.text(
                 pos[tau][0],
@@ -3196,46 +3127,15 @@ if __name__ == "__main__":
     val_matrix = np.zeros((4, 4, 3))
 
     # Complete test case
-    link_matrix = np.zeros(val_matrix.shape, dtype="U3")
+    link_matrix = np.zeros(val_matrix.shape)
 
-    link_matrix[0, 1, 0] = "x-o"
-    link_matrix[1, 0, 0] = "o-x"
-    link_matrix[1, 2, 0] = "o-o"
-    link_matrix[2, 1, 0] = "o-o"
-    link_matrix[0, 2, 0] = "<-x"
-    link_matrix[2, 0, 0] = "x->"
-    link_matrix[2, 3, 0] = "--o"
-    link_matrix[3, 2, 0] = "o--"
-    link_matrix[1, 3, 0] = "<->"
-    link_matrix[3, 1, 0] = "<->"
-    link_matrix[3, 1, 2] = "x-o"
-    link_matrix[1, 3, 1] = "-->"
-
-    fig = pyplot.figure(figsize=(12, 6))
-    ax = fig.add_subplot(111)
-
-    plot_graph(
-        link_matrix=link_matrix,
-        arrow_linewidth=5,
-        fig_ax=(fig, ax),
-        save_name="testgraph.pdf",
-    )
-
-    # plot_time_series_graph(link_matrix=link_matrix,
-    #   arrow_linewidth=10,
-    #   save_name='testtsg.pdf'
-    #                        )
+    link_matrix[0, 1, 0] = 0
+    link_matrix[1, 0, 0] = 1
 
     nolinks = np.zeros(link_matrix.shape)
-    nolinks[range(4), range(4), 1] = 0.5
-    plot_graph(
-        link_matrix=nolinks,
-        arrow_linewidth=5,
-        fig_ax=(fig, ax),
-        save_name="testgraphzero.pdf",
-    )
-    # plot_time_series_graph(link_matrix=np.zeros(link_matrix.shape),
-    #   arrow_linewidth=10,
-    #   save_name='testtsgzero.pdf')
+    # nolinks[range(4), range(4), 1] = 1
 
-    # pyplot.show()
+    plot_time_series_graph(link_matrix=nolinks)
+    plot_graph(link_matrix=nolinks, save_name=None)
+
+    pyplot.show()

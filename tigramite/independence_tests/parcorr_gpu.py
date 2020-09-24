@@ -421,9 +421,13 @@ if __name__ == "__main__":
     #numpy_time = []
     #torch_time = []
     measure_lst = []
-    #for size in np.logspace(1, 5, num=4):
-    for size in [250, 500, 750, 1000, 2000]:
-        for _ in range(500):
+    # for size in np.logspace(1, 5, num=4):
+    sample_sizes = [500, 1000, 5000, 10000, 50000, 100000, 250000,
+                    500000, 750000, 1000000, 2 * 10**6, 3 * 10**6]
+    #sample_sizes = [0.5 * 10**6, 1 * 10**6,
+    #                2 * 10**6, 3 * 2 * 10**6, 5 * 10**6]
+    for size in sample_sizes:
+        for _ in range(50):
             size = int(size)
             data_numpy = np.random.normal(size=(3, size))
             ts = time.time()

@@ -8,7 +8,7 @@ from __future__ import print_function
 from scipy import special, stats, spatial
 import numpy as np
 
-from .independence_tests_base import CondIndTest
+from independence_tests_base import CondIndTest
 
 try:
     from tigramite import tigramite_cython_code
@@ -16,6 +16,7 @@ except:
     print("Could not import packages for CMIknn and GPDC estimation")
 import multiprocessing
 from joblib import Parallel, delayed
+
 
 class CMIknn(CondIndTest):
     r"""Conditional mutual information test based on nearest-neighbor estimator.
@@ -295,8 +296,6 @@ class CMIknn(CondIndTest):
 
             return null_dist
 
-
-
         dim, T = array.shape
 
         # Skip shuffle test if value is above threshold
@@ -324,10 +323,8 @@ class CMIknn(CondIndTest):
             neighbors = tree_xyz.query(
                 z_array, k=self.shuffle_neighbors, p=np.inf, eps=0.0
             )[1].astype("int32")
-
             null_dist = np.zeros(self.sig_samples)
-
-
+            null_dist_new = np.zeros(self.sig_samples)
 
             num_cores = multiprocessing.cpu_count()
             par_start = time.time()
@@ -335,6 +332,18 @@ class CMIknn(CondIndTest):
             null_dist = Parallel(n_jobs=num_cores)(delayed(_null_dist_func)(sam, T, self.shuffle_neighbors,
                                                                 neighbors, array, x_indices) for sam in range(self.sig_samples))
             null_dist = np.array(null_dist)
+            #par_time = time.time() - par_start
+            #ser_start = time.time()
+
+            """
+            for sam in range(self.sig_samples):
+                null_dist_new[sam] = _null_dist_func(
+                    sam, T, self.shuffle_neighbors, neighbors, array, x_indices)
+            """
+            #ser_time = time.time() - ser_start
+
+            #print(f"Parallel: \t{par_time}")
+            #print(f"Serial: \t{ser_time}")
 
             """
             for sam in range(self.sig_samples):
@@ -345,13 +354,13 @@ class CMIknn(CondIndTest):
                 # print(order[:5])
                 # Select a series of neighbor indices that contains as few as
                 # possible duplicates
+
                 restricted_permutation = tigramite_cython_code._get_restricted_permutation_cython(
                     T=T,
                     shuffle_neighbors=self.shuffle_neighbors,
                     neighbors=neighbors,
                     order=order,
                 )
-
                 array_shuffled = np.copy(array)
                 for i in x_indices:
                     array_shuffled[i] = array[i, restricted_permutation]
@@ -359,8 +368,8 @@ class CMIknn(CondIndTest):
                 null_dist[sam] = self.get_dependence_measure(
                     array_shuffled, xyz
                 )
-                """
-
+            #np.testing.assert_array_equal(null_dist_new, null_dist)
+            """
         else:
             null_dist = self._get_shuffle_dist(
                 array,
@@ -379,4 +388,28 @@ class CMIknn(CondIndTest):
             return pval, null_dist
         return pval
 
+if __name__ == "__main__":
 
+    import time
+
+    cmi = CMIknn()
+    size = 1000
+    dim = 10
+    data_numpy = np.random.normal(size=(dim, size))
+    xyz = np.arange(dim)
+    start = time.time()
+    foo = cmi._get_nearest_neighbors(array=data_numpy, xyz=xyz, knn=3)
+    get_nn_time = time.time() - start
+
+    start = time.time()
+    cmi.get_dependence_measure(array=data_numpy, xyz=xyz)
+    get_dm_time= time.time() - start
+
+    start = time.time()
+    cmi.get_shuffle_significance(
+        array=data_numpy, xyz=xyz, value=1, return_null_dist=False)
+    shuffle_sig_time = time.time() - start
+
+    print(f"_get_nearest_neighbors: \t{get_nn_time}")
+    print(f"get_dependence_measure: \t{get_dm_time}")
+    print(f"get_shuffle_significance: \t{shuffle_sig_time}")
