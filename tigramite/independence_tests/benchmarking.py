@@ -10,10 +10,6 @@ import os
 import sys
 
 
-def get_payload(data):
-    arg_dict = {}
-
-
 if __name__ == "__main__":
 
     file_list = []
