@@ -307,11 +307,13 @@ class CMIknn(CondIndTest):
                 # print(order[:5])
                 # Select a series of neighbor indices that contains as few as
                 # possible duplicates
-                restricted_permutation = tigramite_cython_code._get_restricted_permutation_cython(
-                    T=T,
-                    shuffle_neighbors=self.shuffle_neighbors,
-                    neighbors=neighbors,
-                    order=order,
+                restricted_permutation = (
+                    tigramite_cython_code._get_restricted_permutation_cython(
+                        T=T,
+                        shuffle_neighbors=self.shuffle_neighbors,
+                        neighbors=neighbors,
+                        order=order,
+                    )
                 )
 
                 array_shuffled = np.copy(array)

@@ -27,7 +27,6 @@ def timeit(method):
     return timed
 
 
-
 class ParCorr(CondIndTest):
     r"""Partial correlation test.
 
