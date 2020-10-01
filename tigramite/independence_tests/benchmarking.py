@@ -15,7 +15,7 @@ if __name__ == "__main__":
     file_list = []
     data_path = os.path.expanduser("~") + "/CauseMeData/Datasets/"
 
-    df_benchmarking = pd.DataFrame(columns=["Function", "N", "T", "Time"])
+    df_benchmarking = pd.DataFrame(columns=["Function", "N", "T", "Time", "Type"])
 
     parcorr = ParCorr()
     cmiknn = CMIknn()
@@ -81,9 +81,10 @@ if __name__ == "__main__":
                         "N": arg_dict["dim"],
                         "T": arg_dict["T"],
                         "Time": end,
+                        "Type": "Standard"
                     }
                     df_benchmarking = df_benchmarking.append(
                         measurement, ignore_index=True
                     )
-
+    df_benchmarking.to_feather(path=path)
     print(df_benchmarking)
